@@ -78,11 +78,10 @@ bool isCoefficientValid(const char input[]) {
         return false;
     }
 
-    bool hasSlash = false;    
-    bool hasMinus = false;   
-    bool inNumber = false;   
-    int length = 0;          
-
+    bool hasSlash = false;
+    bool hasMinus = false;
+    bool inNumber = false;
+    int length = 0;
 
     for (int i = 0; input[i] != '\0'; ++i, ++length) {
         char c = input[i];
@@ -94,7 +93,6 @@ bool isCoefficientValid(const char input[]) {
             }
             hasMinus = true;
         }
-
         else if (c == '/') {
             if (hasSlash) {
                 cout << "Invalid coefficient: More than one '/' is not allowed!" << endl;
@@ -120,6 +118,12 @@ bool isCoefficientValid(const char input[]) {
 
     if (length > 0 && (input[length - 1] == '/' || input[length - 1] == '-')) {
         cout << "Invalid coefficient: Cannot end with '/' or '-'" << endl;
+        return false;
+    }
+
+    const char* slashPos = strchr(input, '/');
+    if (slashPos != nullptr && atoi(slashPos + 1) == 0) {
+        cout << "Invalid coefficient: Denominator cannot be zero!" << endl;
         return false;
     }
 
@@ -188,6 +192,27 @@ void ProcessPowers(char* input, int* pPowers, int& counter) {
     }
 }
 
+int RemoveDuplicates(int* powers, int count) {
+    int uniqueCount = 0;
+
+    for (int i = 0; i < count; ++i) {
+        bool isDuplicate = false;
+
+        for (int j = 0; j < uniqueCount; ++j) {
+            if (powers[i] == powers[j]) {
+                isDuplicate = true;
+                break;
+            }
+        }
+
+        if (!isDuplicate) {
+            powers[uniqueCount++] = powers[i];
+        }
+    }
+
+    return uniqueCount;
+}
+
 bool ProcessRational(const char* input, Rational& rational) {
     int numerator = 0;
     int denominator = 0;
@@ -196,7 +221,7 @@ bool ProcessRational(const char* input, Rational& rational) {
 
     for (int i = 0; input[i] != '\0'; ++i) {
         if (input[i] == '-') {
-            if (i == 0 || inDenominator) {
+            if (i == 0 || (inDenominator && denominator == 0)) {
                 isNegative = true;
             }
             else {
@@ -222,16 +247,75 @@ bool ProcessRational(const char* input, Rational& rational) {
         }
     }
 
-    if (denominator == 0 && inDenominator) {
-        return false;
+    if (inDenominator && denominator == 0) {
+        return false; 
     }
 
     if (isNegative) {
         numerator = -numerator;
     }
 
-    rational = Rational(numerator, denominator);
+    rational = Rational(numerator, inDenominator ? denominator : 1);
     return true;
+}
+
+void EnterCoefficients(const int* powers, int powerCount, vector<pair<int, Rational>>& coefficients, char* input) {
+    if (powers == nullptr || input == nullptr) {
+        cout << "Error: Null pointer passed to EnterCoefficients." << endl;
+        return;
+    }
+
+    for (int i = 0; i < powerCount; ++i) {
+        bool valid = false;
+
+        do {
+            cout << "Enter coefficient for power " << powers[i] << ": ";
+            cin.getline(input, 50);
+
+            if (isCoefficientValid(input)) {
+                Rational coefficient;
+                if (ProcessRational(input, coefficient)) {
+                    coefficients.push_back({ powers[i], coefficient });
+                    valid = true;
+                }
+                else {
+                    cout << "Invalid coefficient: Denominator cannot be zero. Please re-enter." << endl;
+                }
+            }
+            else {
+                cout << "Invalid coefficient. Please re-enter." << endl;
+            }
+        } while (!valid);
+    }
+}
+
+
+void EnterPowers(int* powers, char* input, int& counter) {
+    if (powers == nullptr || input == nullptr) {
+        cerr << "Error: Null pointer passed to EnterPowers." << endl;
+        return;
+    }
+
+    do {
+        cout << "Enter powers: ";
+        cin.getline(input, MAX_ARR_SIZE);
+        counter = 0;
+    } while (!arePowersValid(input));
+
+    ProcessPowers(input, powers, counter);
+    counter = RemoveDuplicates(powers, counter);
+
+    bool zeroPowerFound = false;
+    for (int i = 0; i < counter; ++i) {
+        if (powers[i] == 0) {
+            zeroPowerFound = true;
+            break;
+        }
+    }
+    if (!zeroPowerFound) {
+        powers[counter] = 0; 
+        ++counter;            
+    }
 }
 
 int main()
@@ -240,38 +324,32 @@ int main()
     int qPowers[MAX_ARR_SIZE] = { 0 };
     char input[MAX_ARR_SIZE];
     int pCounter = 0;
+    int qCounter = 0;
 
     vector < pair<int, Rational>> pVector;
+    vector<pair<int, Rational>> qVector;
 
-    do {
-        cout << "Enter powers of P(x): ";
-        cin.getline(input, MAX_ARR_SIZE);
-        pCounter = 0;
-    } while (!arePowersValid(input));
+    cout << "Enter powers for P(x):" << endl;
+    EnterPowers(pPowers, input, pCounter);
 
-    ProcessPowers(input, pPowers, pCounter);
+    EnterCoefficients(pPowers, pCounter, pVector, input);
 
-    for (int i = 0; i < pCounter; i++) {
-        bool valid = false;
+    cout << "Enter powers for Q(x):" << endl;
+    EnterPowers(qPowers, input, qCounter);
 
-        do {
-            cout << "Enter coefficient for power " << pPowers[i] << ": ";
-            cin.getline(input, MAX_ARR_SIZE);
+    EnterCoefficients(qPowers, qCounter, qVector, input);
 
-            if (isCoefficientValid(input)) {
-                Rational coefficient;
-                ProcessRational(input, coefficient);
-                pVector.push_back({ pPowers[i], coefficient });
-                valid = true;
-            }
-            else {
-                cout << "Invalid coefficient. Please re-enter." << endl;
-            }
-        } while (!valid);
-    }
 
     cout << "P(x):" << endl;
     for (const auto& term : pVector) {
+        cout << "Power: " << term.first
+            << ", Coefficient: " << term.second.numerator
+            << "/" << term.second.denominator << endl;
+    }
+
+    
+    cout << "Q(x):" << endl;
+    for (const auto& term : qVector) {
         cout << "Power: " << term.first
             << ", Coefficient: " << term.second.numerator
             << "/" << term.second.denominator << endl;
