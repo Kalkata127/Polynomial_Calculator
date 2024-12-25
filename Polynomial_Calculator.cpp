@@ -15,202 +15,13 @@ struct Rational {
     }
 };
 
-float processFractionInput(char* ptr) {
-    if (ptr == nullptr) {
-        cout << "ptr is null";
-        return 0;
-    }
-    char* originalPtr = ptr;
-    float result = 0.0;
-    int slashid = 0;
-    int counter = 0;
-    bool IsNegatie = 0;
-
-    if (*ptr == '-') {
-        ptr++;
-        originalPtr++;
-        IsNegatie = 1;
-    }
-
-    while (*ptr != '\0') {
-        if (*ptr == '/')
-            slashid = counter;
-        ptr++;
-        counter++;
-    }
-    ptr = originalPtr;
-
-    float first = 0.0;
-    for (int i = slashid; i > 0; i--) {
-        if (i > 1) {
-            first += (((float)*ptr - '0') * 10);
-        }
-        else {
-            first += ((float)*ptr - '0');
-        }
-        ptr++;
-    }
-
-    ptr = originalPtr + slashid + 1;
-
-    float second = 0.0;
-    for (int j = counter - slashid - 1; j > 0; j--) {
-        if (j > 1) {
-            second += (((float)*ptr - '0') * 10);
-        }
-        else {
-            second += ((float)*ptr - '0');
-        }
-        ptr++;
-    }
-    if (second == 0.00) {
-        cout << "Can't divide by 0";
-        return 0;
-    }
-    result = first / second;
-
-    if (IsNegatie) {
-        return result * (-1);
-    }
-    return result;
-}
-
-void toInt(char* input, int* output, int& counter) {
-    if (input == nullptr || output == nullptr) {
-        return;
-    }
-
-    bool isNeg = 0;
-    int num = 0;
-    bool inNumber = 0;
-
-    while (*input != '\0') {
-        if (*input == '-') {
-            isNeg = true;
-        }
-        else if (*input >= '0' && *input <= '9') {
-            num = num * 10 + (*input - '0');
-            inNumber = true;
-        }
-        else if (*input == ' ') {
-            if (inNumber) {
-                if (isNeg) {
-                    num = -num;
-                }
-                *output = num;
-                output++;
-                counter++;
-                num = 0;
-                isNeg = false;
-                inNumber = false;
-            }
-        }
-        input++;
-    }
-
-    if (inNumber) {
-        if (isNeg) {
-            num = -num;
-        }
-        *output = num;
-        counter++;
-    }
-}
-
-void DisplayPolynom(vector<pair<int, int>>* vPtr) {
-    if (vPtr == nullptr) return;
-
-    vector<pair<int, int>>* orgPtr = vPtr;
-    for (size_t i = 0; i < (*vPtr).size(); i++) {
-        if ((*vPtr)[i].second > 0) {
-            cout << "+" << (*vPtr)[i].second;
-        }
-        else {
-            cout << (*vPtr)[i].second;
-        }
-        cout << "x^" << (*vPtr)[i].first << " ";
-    }
-    cout << endl;
-
-}
-
-void sortVector(vector<pair<int, int>>& vec) {
+void sortVector(vector<pair<Rational, int>>& vec) {
     for (size_t i = 0; i < vec.size(); ++i) {
         for (size_t j = 0; j < vec.size() - i - 1; ++j) {
-            if (vec[j].first < vec[j + 1].first) {
+            if (vec[j].second < vec[j + 1].second) {
                 swap(vec[j], vec[j + 1]);
             }
         }
-    }
-}
-
-void PolynomSum(vector<pair<int, int>>* v1Ptr, vector<pair<int, int>>* v2Ptr, vector<pair<int, int>>& resVec) {
-    if (v1Ptr == nullptr || v2Ptr == nullptr) {
-        return;
-    }
-    size_t idV1 = 0;
-    size_t idV2 = 0;
-
-    while (idV1 < (*v1Ptr).size() && idV2 < (*v2Ptr).size()) {
-        if ((*v1Ptr)[idV1].first == (*v2Ptr)[idV2].first) {
-            int sum = (*v1Ptr)[idV1].second + (*v2Ptr)[idV2].second;
-            resVec.emplace_back((*v1Ptr)[idV1].first, sum);
-            idV1++;
-            idV2++;
-        }
-        else if ((*v1Ptr)[idV1].first > (*v2Ptr)[idV2].first) {
-            resVec.emplace_back((*v1Ptr)[idV1].first, (*v1Ptr)[idV1].second);
-            idV1++;
-        }
-        else {
-            resVec.emplace_back((*v2Ptr)[idV2].first, (*v2Ptr)[idV2].second);
-            idV2++;
-        }
-    }
-
-    while (idV1 < (*v1Ptr).size()) {
-        resVec.emplace_back((*v1Ptr)[idV1].first, (*v1Ptr)[idV1].second);
-        idV1++;
-    }
-
-    while (idV2 < (*v2Ptr).size()) {
-        resVec.emplace_back((*v2Ptr)[idV2].first, (*v2Ptr)[idV2].second);
-        idV2++;
-    }
-}
-
-void PolynomSubtract(vector<pair<int, int>>* v1Ptr, vector<pair<int, int>>* v2Ptr, vector<pair<int, int>>& resVec) {
-    if (v1Ptr == nullptr || v2Ptr == nullptr) {
-        return;
-    }
-    size_t idV1 = 0;
-    size_t idV2 = 0;
-
-    while (idV1 < (*v1Ptr).size() && idV2 < (*v2Ptr).size()) {
-        if ((*v1Ptr)[idV1].first == (*v2Ptr)[idV2].first) {
-            int sum = (*v1Ptr)[idV1].second - (*v2Ptr)[idV2].second;
-            resVec.emplace_back((*v1Ptr)[idV1].first, sum);
-            idV1++;
-            idV2++;
-        }
-        else if ((*v1Ptr)[idV1].first > (*v2Ptr)[idV2].first) {
-            resVec.emplace_back((*v1Ptr)[idV1].first, (*v1Ptr)[idV1].second);
-            idV1++;
-        }
-        else {
-            resVec.emplace_back((*v2Ptr)[idV2].first, (*v2Ptr)[idV2].second);
-            idV2++;
-        }
-    }
-
-    while (idV1 < (*v1Ptr).size()) {
-        resVec.emplace_back((*v1Ptr)[idV1].first, (*v1Ptr)[idV1].second);
-        idV1++;
-    }
-
-    while (idV2 < (*v2Ptr).size()) {
-        resVec.emplace_back((*v2Ptr)[idV2].first, (*v2Ptr)[idV2].second);
-        idV2++;
     }
 }
 
@@ -262,6 +73,121 @@ bool arePowersValid(const char input[]) {
     return true;
 }
 
+bool isCoefficientValid(const char input[]) {
+    if (!isInputValid(input)) {
+        return false;
+    }
+
+    bool hasSlash = false;    
+    bool hasMinus = false;   
+    bool inNumber = false;   
+    int length = 0;          
+
+
+    for (int i = 0; input[i] != '\0'; ++i, ++length) {
+        char c = input[i];
+
+        if (c == '-') {
+            if (i != 0 || hasMinus) {
+                cout << "Invalid coefficient: '-' can only appear at the beginning!" << endl;
+                return false;
+            }
+            hasMinus = true;
+        }
+
+        else if (c == '/') {
+            if (hasSlash) {
+                cout << "Invalid coefficient: More than one '/' is not allowed!" << endl;
+                return false;
+            }
+            hasSlash = true;
+            inNumber = false;
+        }
+        else if (c >= '0' && c <= '9') {
+            inNumber = true;
+        }
+        else if (c == ' ') {
+            if (inNumber) {
+                cout << "Invalid coefficient: Spaces are not allowed within a number!" << endl;
+                return false;
+            }
+        }
+        else {
+            cout << "Invalid character in coefficient!" << endl;
+            return false;
+        }
+    }
+
+    if (length > 0 && (input[length - 1] == '/' || input[length - 1] == '-')) {
+        cout << "Invalid coefficient: Cannot end with '/' or '-'" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+int splitInput(const char* input, int* output) {
+    if (input == nullptr || output == nullptr) {
+        return 0;
+    }
+
+    int index = 0;       
+    bool inNum = false;  
+    bool isNeg = false; 
+    int num = 0;         
+    bool hasMinus = false;
+
+    while (*input != '\0') {
+        if (*input == '-') {
+            if (inNum) {
+                cout << "Invalid input: multiple '-' in a single number" <<endl;
+                return -1;
+            }
+            isNeg = true;
+            hasMinus = true;
+            inNum = true;
+        }
+        else if (*input >= '0' && *input <= '9') {
+            num = num * 10 + (*input - '0');
+            inNum = true;
+        }
+        else if (*input == ' ') {
+            if (inNum) {
+                if (isNeg) {
+                    num = -num;
+                }
+                output[index++] = num; 
+                num = 0;               
+                inNum = false;
+                isNeg = false;
+                hasMinus = false;
+            }
+        }
+        input++;
+    }
+
+    if (inNum) {
+        if (isNeg) {
+            num = -num;
+        }
+        output[index++] = num;
+    }
+
+    return index;
+}
+
+void ProcessPowers(char* input, int* pPowers, int& counter) {
+    if (input == nullptr || pPowers == nullptr) {
+        return;
+    }
+    counter = splitInput(input, pPowers);
+
+    if (counter == -1) {
+        cout << "Error processing input for powers" << endl;
+        return;
+    }
+}
+
 int main()
 {
     int pPowers[MAX_ARR_SIZE] = { 0 };
@@ -269,66 +195,22 @@ int main()
     char input[MAX_ARR_SIZE];
     int pCounter = 0;
 
+    vector < pair<int, Rational>> pVector;
+
     do {
         cout << "Enter powers of P(x): ";
         cin.getline(input, MAX_ARR_SIZE);
         pCounter = 0;
-        //toInt(input, pPowers, pCounter);
     } while (!arePowersValid(input));
 
+    ProcessPowers(input, pPowers, pCounter);
+
+    cout << "Counter = " << pCounter << endl;
+
     for (int i = 0; i < pCounter; i++) {
-        cout << pPowers[i];
+        cout << pPowers[i] << endl;
     }
 
-    cout << "Enter powers of Q(x): ";
-    cin.getline(input, MAX_ARR_SIZE);
-    int qCounter = 0;
-    toInt(input, qPowers, qCounter);
 
-    vector<pair<int, int>> v1;
-
-    int i = 0;
-    do {
-        cout << "Enter P coeficient before " << "x^" << pPowers[i] << " :";
-        int psecond = 0;
-        cin >> psecond;
-        v1.emplace_back(pPowers[i], psecond);
-        i++;
-    } while (i < pCounter);
-
-    sortVector(v1);
-
-    for (size_t i = 0; i < v1.size(); i++)
-        cout << v1[i].first << " " << v1[i].second << endl;
-
-    vector<pair<int, int>> v2;
-    int j = 0;
-    do {
-        cout << "Enter Q coeficient before " << "x^" << qPowers[j] << " :";
-        int qsecond = 0;
-        cin >> qsecond;
-        v2.emplace_back(qPowers[j], qsecond);
-        j++;
-    } while (j < qCounter);
-
-    sortVector(v2);
-
-    for (size_t i = 0; i < v2.size(); i++)
-        cout << v2[i].first << " " << v2[i].second << endl;
-    cout << "P(x) = ";
-    DisplayPolynom(&v1);
-    cout << "Q(x) = ";
-    DisplayPolynom(&v2);
-
-    cout << "Sum is: ";
-    vector<pair<int, int>> resVec;
-    PolynomSum(&v1, &v2, resVec);
-
-    vector<pair<int, int>> resVecSubt;
-    PolynomSubtract(&v1, &v2, resVecSubt);
-    cout << "Sum: " << endl;
-    DisplayPolynom(&resVec);
-    cout << endl << "Subtract: " << endl;
-    DisplayPolynom(&resVecSubt);
     return 0;
 }
