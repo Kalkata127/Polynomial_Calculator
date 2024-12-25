@@ -188,6 +188,52 @@ void ProcessPowers(char* input, int* pPowers, int& counter) {
     }
 }
 
+bool ProcessRational(const char* input, Rational& rational) {
+    int numerator = 0;
+    int denominator = 0;
+    bool isNegative = false;
+    bool inDenominator = false;
+
+    for (int i = 0; input[i] != '\0'; ++i) {
+        if (input[i] == '-') {
+            if (i == 0 || inDenominator) {
+                isNegative = true;
+            }
+            else {
+                return false;
+            }
+        }
+        else if (input[i] == '/') {
+            if (inDenominator) {
+                return false;
+            }
+            inDenominator = true;
+        }
+        else if (input[i] >= '0' && input[i] <= '9') {
+            if (inDenominator) {
+                denominator = denominator * 10 + (input[i] - '0');
+            }
+            else {
+                numerator = numerator * 10 + (input[i] - '0');
+            }
+        }
+        else {
+            return false;
+        }
+    }
+
+    if (denominator == 0 && inDenominator) {
+        return false;
+    }
+
+    if (isNegative) {
+        numerator = -numerator;
+    }
+
+    rational = Rational(numerator, denominator);
+    return true;
+}
+
 int main()
 {
     int pPowers[MAX_ARR_SIZE] = { 0 };
@@ -205,12 +251,31 @@ int main()
 
     ProcessPowers(input, pPowers, pCounter);
 
-    cout << "Counter = " << pCounter << endl;
-
     for (int i = 0; i < pCounter; i++) {
-        cout << pPowers[i] << endl;
+        bool valid = false;
+
+        do {
+            cout << "Enter coefficient for power " << pPowers[i] << ": ";
+            cin.getline(input, MAX_ARR_SIZE);
+
+            if (isCoefficientValid(input)) {
+                Rational coefficient;
+                ProcessRational(input, coefficient);
+                pVector.push_back({ pPowers[i], coefficient });
+                valid = true;
+            }
+            else {
+                cout << "Invalid coefficient. Please re-enter." << endl;
+            }
+        } while (!valid);
     }
 
+    cout << "P(x):" << endl;
+    for (const auto& term : pVector) {
+        cout << "Power: " << term.first
+            << ", Coefficient: " << term.second.numerator
+            << "/" << term.second.denominator << endl;
+    }
 
     return 0;
 }
