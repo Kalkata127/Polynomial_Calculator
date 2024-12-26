@@ -464,6 +464,31 @@ void PolynomSubtract(vector<pair<int, Rational>>* v1Ptr, vector<pair<int, Ration
     }
 }
 
+void MultiplyByScalar(const Rational& scalar, vector<pair<int, Rational>>& polynomial) {
+    if (scalar.numerator == 0) {
+        for (size_t i = 0; i < polynomial.size(); ++i) {
+            polynomial[i].second.numerator = 0; 
+            polynomial[i].second.denominator = 1; 
+        }
+        return;
+    }
+
+    for (size_t i = 0; i < polynomial.size(); ++i) {
+        polynomial[i].second.numerator *= scalar.numerator;
+
+        polynomial[i].second.denominator *= scalar.denominator;
+
+        int greatestCommonDivisor = GCD(abs(polynomial[i].second.numerator), abs(polynomial[i].second.denominator));
+        polynomial[i].second.numerator /= greatestCommonDivisor;
+        polynomial[i].second.denominator /= greatestCommonDivisor;
+
+        if (polynomial[i].second.denominator < 0) {
+            polynomial[i].second.numerator = -polynomial[i].second.numerator;
+            polynomial[i].second.denominator = -polynomial[i].second.denominator;
+        }
+    }
+}
+
 
 bool getValidatedNumber(const char* input, int& number) {
     for (size_t i = 0; input[i] != '\0'; ++i) {
@@ -499,6 +524,7 @@ int main() {
         cout << "1 - Sum two polynomials" << endl;
         cout << "2 - Subtract two polynomials" << endl;
         cout << "3 - Quit the application" << endl;
+        cout << "4 - Multiply polynomial by scalar" << endl; 
 
         int choice = 0;
         bool validChoice = false;
@@ -550,8 +576,41 @@ int main() {
             cout << "Thank you for using the Polynomial Calculator. Goodbye!" << endl;
             return 0;
 
+        case 4: { 
+            Rational scalar;
+            bool validScalar = false;
+
+            do {
+                cout << "Enter scalar (as a rational number): ";
+                getInput(input);
+
+                if (isCoefficientValid(input)) {
+                    if (ProcessRational(input, scalar)) {
+                        validScalar = true;
+                    }
+                    else {
+                        cout << "Invalid scalar. Denominator cannot be zero. Please re-enter." << endl;
+                    }
+                }
+                else {
+                    cout << "Invalid scalar format. Please re-enter." << endl;
+                }
+            } while (!validScalar);
+
+            cout << "Enter powers for the polynomial P(x):" << endl;
+            EnterPowers(pPowers, input, pCounter);
+
+            EnterCoefficients(pPowers, pCounter, pVector, input);
+            sortVector(pVector);
+
+            MultiplyByScalar(scalar, pVector); 
+            cout << "Result of P(x) multiplied by " << scalar.numerator << "/" << scalar.denominator << ": ";
+            DisplayPolynom(&pVector);
+            break;
+        }
+
         default:
-            cout << "Invalid choice. Please enter 1, 2, or 3." << endl;
+            cout << "Invalid choice. Please enter 1, 2, 3, or 4." << endl;
             break;
         }
 
@@ -563,6 +622,7 @@ int main() {
         fill(begin(pPowers), end(pPowers), 0);
         fill(begin(qPowers), end(qPowers), 0);
     }
+
 
     return 0;
 }
