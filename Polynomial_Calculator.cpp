@@ -15,15 +15,36 @@ struct Rational {
     }
 };
 
-void sortVector(vector<pair<Rational, int>>& vec) {
+void sortVector(vector<pair<int, Rational>>& vec) {
     for (size_t i = 0; i < vec.size(); ++i) {
         for (size_t j = 0; j < vec.size() - i - 1; ++j) {
-            if (vec[j].second < vec[j + 1].second) {
+            if (vec[j].first < vec[j + 1].first) {
                 swap(vec[j], vec[j + 1]);
             }
         }
     }
 }
+
+void DisplayPolynom(vector<pair<int, Rational>>* vPtr) {
+    if (vPtr == nullptr) return;
+    vector<pair<int, Rational>>& vec = *vPtr; 
+
+    for (size_t i = 0; i < vec.size(); ++i) {
+        pair<int, Rational> term = vec[i];  
+        int power = term.first;
+        Rational coeff = term.second;       
+
+        if (coeff.numerator > 0 && i > 0) {
+            cout << "+"; 
+        }
+        cout << coeff.numerator;
+        if (coeff.denominator != 1) cout << "/" << coeff.denominator;
+ 
+        if (power != 0) cout << "x^" << power << " ";
+    }
+    cout << endl;
+}
+
 
 bool isInputValid(const char input[]) {
     if ((input == nullptr) ? (cout << "Error: Null pointer passed as input!" << endl, true) : false) return false;
@@ -306,27 +327,20 @@ int main()
     EnterPowers(pPowers, input, pCounter);
 
     EnterCoefficients(pPowers, pCounter, pVector, input);
+    sortVector(pVector);
 
     cout << "Enter powers for Q(x):" << endl;
     EnterPowers(qPowers, input, qCounter);
 
     EnterCoefficients(qPowers, qCounter, qVector, input);
+    sortVector(qVector);
 
+    cout << "P(x): ";
+    DisplayPolynom(&pVector);
 
-    cout << "P(x):" << endl;
-    for (const auto& term : pVector) {
-        cout << "Power: " << term.first
-            << ", Coefficient: " << term.second.numerator
-            << "/" << term.second.denominator << endl;
-    }
+    cout << "Q(x): ";
+    DisplayPolynom(&qVector);
 
-    
-    cout << "Q(x):" << endl;
-    for (const auto& term : qVector) {
-        cout << "Power: " << term.first
-            << ", Coefficient: " << term.second.numerator
-            << "/" << term.second.denominator << endl;
-    }
 
     return 0;
 }
