@@ -26,10 +26,9 @@ void sortVector(vector<pair<Rational, int>>& vec) {
 }
 
 bool isInputValid(const char input[]) {
-    if (input[0] == '\0') {
-        cout << "Input is empty!" << endl;
-        return false;
-    }
+    if ((input == nullptr) ? (cout << "Error: Null pointer passed as input!" << endl, true) : false) return false;
+
+    if ((input[0] == '\0') ? (cout << "Input is empty!" << endl, true) : false) return false;
 
     bool hasNonSpaceCharacter = false;
 
@@ -55,14 +54,10 @@ bool isInputValid(const char input[]) {
 }
 
 bool arePowersValid(const char input[]) {
-    if (!isInputValid(input)) {
-        return false;
-    }
+    if (!isInputValid(input)) return false;
 
     for (int i = 0; input[i] != '\0'; ++i) {
         char c = input[i];
-
-        if (c == ' ') continue;
 
         if (c == '-' || c == '/') {
             cout << "Input contains invalid power format (negative or fractional)!" << endl;
@@ -77,11 +72,8 @@ bool isCoefficientValid(const char input[]) {
     if (!isInputValid(input)) {
         return false;
     }
-
-    bool hasSlash = false;
-    bool hasMinus = false;
-    bool inNumber = false;
-    int length = 0;
+    bool hasSlash = false, hasMinus = false, inNumber = false;
+    int length = 0, denominator = 0;
 
     for (int i = 0; input[i] != '\0'; ++i, ++length) {
         char c = input[i];
@@ -102,13 +94,10 @@ bool isCoefficientValid(const char input[]) {
             inNumber = false;
         }
         else if (c >= '0' && c <= '9') {
-            inNumber = true;
-        }
-        else if (c == ' ') {
-            if (inNumber) {
-                cout << "Invalid coefficient: Spaces are not allowed within a number!" << endl;
-                return false;
+            if (hasSlash) {
+                denominator = denominator * 10 + (c - '0');
             }
+            inNumber = true;
         }
         else {
             cout << "Invalid character in coefficient!" << endl;
@@ -121,8 +110,7 @@ bool isCoefficientValid(const char input[]) {
         return false;
     }
 
-    const char* slashPos = strchr(input, '/');
-    if (slashPos != nullptr && atoi(slashPos + 1) == 0) {
+    if (hasSlash && denominator == 0) {
         cout << "Invalid coefficient: Denominator cannot be zero!" << endl;
         return false;
     }
@@ -135,21 +123,16 @@ int splitInput(const char* input, int* output) {
         return 0;
     }
 
-    int index = 0;       
-    bool inNum = false;  
-    bool isNeg = false; 
-    int num = 0;         
-    bool hasMinus = false;
+    int index = 0, num = 0;
+    bool isNeg = false, inNum = false;
 
     while (*input != '\0') {
         if (*input == '-') {
             if (inNum) {
-                cout << "Invalid input: multiple '-' in a single number" <<endl;
+                cout << "Invalid input: multiple '-' in a single number" << endl;
                 return -1;
             }
             isNeg = true;
-            hasMinus = true;
-            inNum = true;
         }
         else if (*input >= '0' && *input <= '9') {
             num = num * 10 + (*input - '0');
@@ -157,24 +140,17 @@ int splitInput(const char* input, int* output) {
         }
         else if (*input == ' ') {
             if (inNum) {
-                if (isNeg) {
-                    num = -num;
-                }
-                output[index++] = num; 
-                num = 0;               
-                inNum = false;
+                output[index++] = isNeg ? -num : num;
+                num = 0;
                 isNeg = false;
-                hasMinus = false;
+                inNum = false;
             }
         }
         input++;
     }
 
     if (inNum) {
-        if (isNeg) {
-            num = -num;
-        }
-        output[index++] = num;
+        output[index++] = isNeg ? -num : num;
     }
 
     return index;
@@ -274,25 +250,22 @@ void EnterCoefficients(const int* powers, int powerCount, vector<pair<int, Ratio
 
             if (isCoefficientValid(input)) {
                 Rational coefficient;
-                if (ProcessRational(input, coefficient)) {
-                    coefficients.push_back({ powers[i], coefficient });
-                    valid = true;
-                }
-                else {
-                    cout << "Invalid coefficient: Denominator cannot be zero. Please re-enter." << endl;
-                }
+                ProcessRational(input, coefficient);
+                coefficients.emplace_back(powers[i], coefficient);
+                valid = true;
             }
             else {
-                cout << "Invalid coefficient. Please re-enter." << endl;
+                cout << "Invalid coefficient. Please re-enter." << endl; 
             }
         } while (!valid);
     }
 }
 
 
+
 void EnterPowers(int* powers, char* input, int& counter) {
     if (powers == nullptr || input == nullptr) {
-        cerr << "Error: Null pointer passed to EnterPowers." << endl;
+        cout << "Error: Null pointer passed to EnterPowers." << endl;
         return;
     }
 
