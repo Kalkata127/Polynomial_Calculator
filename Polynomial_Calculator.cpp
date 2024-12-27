@@ -488,6 +488,72 @@ void MultiplyByScalar(const Rational& scalar, vector<pair<int, Rational>>& polyn
         }
     }
 }
+void MultiplyPolynomials(
+    const vector<pair<int, Rational>>& poly1,
+    const vector<pair<int, Rational>>& poly2,
+    vector<pair<int, Rational>>& result)
+{
+    result.clear();
+
+    if (poly1.empty() || poly2.empty()) {
+        return;
+    }
+
+    vector<pair<int, Rational>> tempResult;
+
+    for (size_t i = 0; i < poly1.size(); ++i) {
+        for (size_t j = 0; j < poly2.size(); ++j) {
+            Rational coefficient(
+                poly1[i].second.numerator * poly2[j].second.numerator,
+                poly1[i].second.denominator * poly2[j].second.denominator
+            );
+
+            int gcd = GCD(abs(coefficient.numerator), abs(coefficient.denominator));
+            coefficient.numerator /= gcd;
+            coefficient.denominator /= gcd;
+
+            if (coefficient.denominator < 0) {
+                coefficient.numerator = -coefficient.numerator;
+                coefficient.denominator = -coefficient.denominator;
+            }
+
+            int power = poly1[i].first + poly2[j].first;
+
+            tempResult.push_back({ power, coefficient });
+        }
+    }
+
+    for (size_t i = 0; i < tempResult.size(); ++i) {
+        bool combined = false;
+        for (size_t j = 0; j < result.size(); ++j) {
+            if (tempResult[i].first == result[j].first) {
+                result[j].second.numerator =
+                    result[j].second.numerator * tempResult[i].second.denominator +
+                    tempResult[i].second.numerator * result[j].second.denominator;
+                result[j].second.denominator *= tempResult[i].second.denominator;
+
+                int gcd = GCD(abs(result[j].second.numerator), abs(result[j].second.denominator));
+                result[j].second.numerator /= gcd;
+                result[j].second.denominator /= gcd;
+
+                if (result[j].second.denominator < 0) {
+                    result[j].second.numerator = -result[j].second.numerator;
+                    result[j].second.denominator = -result[j].second.denominator;
+                }
+
+                combined = true;
+                break;
+            }
+        }
+
+        if (!combined) {
+
+            result.push_back(tempResult[i]);
+        }
+    }
+    sortVector(result);
+}
+
 
 
 bool getValidatedNumber(const char* input, int& number) {
@@ -524,7 +590,8 @@ int main() {
         cout << "1 - Sum two polynomials" << endl;
         cout << "2 - Subtract two polynomials" << endl;
         cout << "3 - Quit the application" << endl;
-        cout << "4 - Multiply polynomial by scalar" << endl; 
+        cout << "4 - Multiply polynomial by scalar" << endl;
+        cout << "5 - Multiply two polynomials" << endl; 
 
         int choice = 0;
         bool validChoice = false;
@@ -576,7 +643,7 @@ int main() {
             cout << "Thank you for using the Polynomial Calculator. Goodbye!" << endl;
             return 0;
 
-        case 4: { 
+        case 4: {
             Rational scalar;
             bool validScalar = false;
 
@@ -603,14 +670,33 @@ int main() {
             EnterCoefficients(pPowers, pCounter, pVector, input);
             sortVector(pVector);
 
-            MultiplyByScalar(scalar, pVector); 
+            MultiplyByScalar(scalar, pVector);
             cout << "Result of P(x) multiplied by " << scalar.numerator << "/" << scalar.denominator << ": ";
             DisplayPolynom(&pVector);
             break;
         }
 
+        case 5: { 
+            cout << "Enter powers for P(x):" << endl;
+            EnterPowers(pPowers, input, pCounter);
+
+            EnterCoefficients(pPowers, pCounter, pVector, input);
+            sortVector(pVector);
+
+            cout << "Enter powers for Q(x):" << endl;
+            EnterPowers(qPowers, input, qCounter);
+
+            EnterCoefficients(qPowers, qCounter, qVector, input);
+            sortVector(qVector);
+
+            MultiplyPolynomials(pVector, qVector, result); 
+            cout << "Result of P(x) * Q(x): ";
+            DisplayPolynom(&result);
+            break;
+        }
+
         default:
-            cout << "Invalid choice. Please enter 1, 2, 3, or 4." << endl;
+            cout << "Invalid choice. Please enter 1, 2, 3, 4, or 5." << endl;
             break;
         }
 
@@ -622,6 +708,7 @@ int main() {
         fill(begin(pPowers), end(pPowers), 0);
         fill(begin(qPowers), end(qPowers), 0);
     }
+
 
 
     return 0;
