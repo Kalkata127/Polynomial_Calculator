@@ -16,8 +16,8 @@ struct Rational {
 };
 
 void sortVector(vector<pair<int, Rational>>& vec) {
-    for (size_t i = 0; i < vec.size(); ++i) {
-        for (size_t j = 0; j < vec.size() - i - 1; ++j) {
+    for (size_t i = 0; i < vec.size(); i++) {
+        for (size_t j = 0; j < vec.size() - i - 1; j++) {
             if (vec[j].first < vec[j + 1].first) {
                 swap(vec[j], vec[j + 1]);
             }
@@ -26,6 +26,7 @@ void sortVector(vector<pair<int, Rational>>& vec) {
 }
 
 void getInput(char* input) {
+    if (input == nullptr) return;
     bool validInput = false;
 
     while (!validInput) {
@@ -54,12 +55,11 @@ void getInput(char* input) {
     }
 }
 
-
 void DisplayPolynomial(vector<pair<int, Rational>>* vPtr) {
     if (vPtr == nullptr) return;
     vector<pair<int, Rational>>& vec = *vPtr; 
 
-    for (size_t i = 0; i < vec.size(); ++i) {
+    for (size_t i = 0; i < vec.size(); i++) {
         pair<int, Rational> term = vec[i];  
         int power = term.first;
         Rational coeff = term.second;   
@@ -91,6 +91,40 @@ int LCM(int a, int b) {
     return abs(a * b) / GCD(a, b);
 }
 
+Rational MultiplyRational(const Rational& r1, const Rational& r2) {
+    int numerator = r1.numerator * r2.numerator;
+    int denominator = r1.denominator * r2.denominator;
+
+    int gcd = GCD(abs(numerator), abs(denominator));
+    numerator /= gcd;
+    denominator /= gcd;
+
+    return Rational(numerator, denominator);
+}
+
+Rational DivideRational(const Rational& r1, const Rational& r2) {
+    if (r2.numerator == 0) {
+        cout << "Error: Division by zero in DivideRational." << endl;
+        return Rational(0, 1);
+    }
+
+    int numerator = r1.numerator * r2.denominator;
+    int denominator = r1.denominator * r2.numerator;
+
+    if (denominator < 0) {
+        numerator = -numerator;
+        denominator = -denominator;
+    }
+
+    int gcd = GCD(abs(numerator), abs(denominator));
+    numerator /= gcd;
+    denominator /= gcd;
+
+    return Rational(numerator, denominator);
+}
+
+
+
 bool isInputValid(const char input[]) {
     if ((input == nullptr) ? (cout << "Error: Null pointer passed as input!" << endl, true) : false) return false;
 
@@ -98,7 +132,7 @@ bool isInputValid(const char input[]) {
 
     bool hasNonSpaceCharacter = false;
 
-    for (int i = 0; input[i] != '\0'; ++i) {
+    for (int i = 0; input[i] != '\0'; i++) {
         char c = input[i];
 
         if (!(c == '-' || c == '/' || (c >= '0' && c <= '9') || c == ' ')) {
@@ -124,7 +158,7 @@ bool arePowersValid(const char input[]) {
     long long power = 0;            
     bool inNumber = false;
 
-    for (int i = 0; input[i] != '\0'; ++i) {
+    for (int i = 0; input[i] != '\0'; i++) {
         char c = input[i];
 
         if (c >= '0' && c <= '9') {            
@@ -155,7 +189,7 @@ bool isCoefficientValid(const char input[]) {
     bool hasSlash = false, hasMinus = false, inNumber = false;
     int length = 0, denominator = 0;
 
-    for (int i = 0; input[i] != '\0'; ++i, ++length) {
+    for (int i = 0; input[i] != '\0'; i++, length++) {
         char c = input[i];
 
         if (c == '-') {
@@ -312,6 +346,9 @@ bool ProcessRational(const char* input, Rational& rational) {
     }
 
     rational = Rational(numerator, inDenominator ? denominator : 1);
+    cout << endl;
+    cout << "Rational is: " << rational.denominator << " " << rational.numerator;
+    cout << endl;
     return true;
 }
 
@@ -423,48 +460,51 @@ void PolynomSum(vector<pair<int, Rational>>* v1Ptr, vector<pair<int, Rational>>*
 }
 
 void PolynomSubtract(vector<pair<int, Rational>>* v1Ptr, vector<pair<int, Rational>>* v2Ptr, vector<pair<int, Rational>>& resVec) {
-    if (v1Ptr == nullptr || v2Ptr == nullptr) {
-        cout << "Error: Null pointer passed to PolynomSubtract." << endl;
-        return;
-    }
+        if (v1Ptr == nullptr || v2Ptr == nullptr) {
+            cout << "Error: Null pointer passed to PolynomSubtract." << endl;
+            return;
+        }
 
-    vector<pair<int, Rational>>& vec1 = *v1Ptr, & vec2 = *v2Ptr;
+        vector<pair<int, Rational>>& vec1 = *v1Ptr;
+        vector<pair<int, Rational>>& vec2 = *v2Ptr;
 
-    size_t idV1 = 0, idV2 = 0;
+        size_t idV1 = 0, idV2 = 0;
 
-    while (idV1 < vec1.size() && idV2 < vec2.size()) {
-        pair<int, Rational> term1 = vec1[idV1], term2 = vec2[idV2];
+        resVec.clear();
 
-        if (term1.first == term2.first) {
-            Rational diffCoeff = AddRational(term1.second, Rational(-term2.second.numerator, term2.second.denominator));
-            resVec.emplace_back(term1.first, diffCoeff);
+        while (idV1 < vec1.size() && idV2 < vec2.size()) {
+            pair<int, Rational> term1 = vec1[idV1], term2 = vec2[idV2];
+
+            if (term1.first == term2.first) {
+                Rational diffCoeff = AddRational(term1.second, Rational(-term2.second.numerator, term2.second.denominator));
+                if (diffCoeff.numerator != 0) {
+                    resVec.emplace_back(term1.first, diffCoeff);
+                }
+                idV1++;
+                idV2++;
+            }
+            else if (term1.first > term2.first) {
+                resVec.emplace_back(term1.first, term1.second);
+                idV1++;
+            }
+            else {
+                Rational negCoeff(-term2.second.numerator, term2.second.denominator);
+                resVec.emplace_back(term2.first, negCoeff);
+                idV2++;
+            }
+        }
+
+        while (idV1 < vec1.size()) {
+            resVec.emplace_back(vec1[idV1].first, vec1[idV1].second);
             idV1++;
+        }
+
+        while (idV2 < vec2.size()) {
+            Rational negCoeff(-vec2[idV2].second.numerator, vec2[idV2].second.denominator);
+            resVec.emplace_back(vec2[idV2].first, negCoeff);
             idV2++;
         }
-        else if (term1.first > term2.first) { 
-            resVec.emplace_back(term1.first, term1.second);
-            idV1++;
-        }
-        else { 
-            Rational negCoeff(-term2.second.numerator, term2.second.denominator);
-            resVec.emplace_back(term2.first, negCoeff);
-            idV2++;
-        }
     }
-
-    while (idV1 < vec1.size()) {
-        pair<int, Rational> remainingTerm = vec1[idV1];
-        resVec.emplace_back(remainingTerm.first, remainingTerm.second);
-        idV1++;
-    }
-
-    while (idV2 < vec2.size()) {
-        pair<int, Rational> remainingTerm = vec2[idV2];
-        Rational negCoeff(-remainingTerm.second.numerator, remainingTerm.second.denominator);
-        resVec.emplace_back(remainingTerm.first, negCoeff);
-        idV2++;
-    }
-}
 
 void MultiplyByScalar(const Rational& scalar, vector<pair<int, Rational>>& polynomial) {
     if (scalar.numerator == 0) {
@@ -508,9 +548,6 @@ void MultiplyPolynomials(const vector<pair<int, Rational>>& p1,const vector<pair
                 p1[i].second.denominator * p2[j].second.denominator
             );
 
-            int gcd = GCD(abs(coefficient.numerator), abs(coefficient.denominator));
-            coefficient.numerator /= gcd;
-            coefficient.denominator /= gcd;
 
             if (coefficient.denominator < 0) {
                 coefficient.numerator = -coefficient.numerator;
@@ -586,6 +623,122 @@ void EvaluatePolynomial(const vector<pair<int, Rational>>& polynomial, const Rat
     }
 }
 
+/*void DividePolynomials(const vector<pair<int, Rational>>* dividendPtr, const vector<pair<int, Rational>>* divisorPtr,
+    vector<pair<int, Rational>>& quotient, vector<pair<int, Rational>>& remainder) {
+    if (dividendPtr == nullptr || divisorPtr == nullptr) {
+        cout << "Error: Null pointer passed to DividePolynomials." << endl;
+        return;
+    }
+
+    vector<pair<int, Rational>> dividend = *dividendPtr;
+    vector<pair<int, Rational>> divisor = *divisorPtr;
+
+    quotient.clear();
+    remainder.clear();
+
+    if (divisor.empty() || divisor.front().second.numerator == 0) {
+        cout << "Error: Cannot divide by a zero polynomial." << endl;
+        return;
+    }
+
+    remainder = dividend;
+
+    while (!remainder.empty() && remainder[0].first >= divisor[0].first) {
+        // Find leading term of the quotient
+        int powerDiff = remainder[0].first - divisor[0].first;
+        Rational coeffQuotient = Rational(
+            remainder[0].second.numerator * divisor[0].second.denominator,
+            remainder[0].second.denominator * divisor[0].second.numerator
+        );
+
+        // Normalize the coefficient
+        int gcd = GCD(abs(coeffQuotient.numerator), abs(coeffQuotient.denominator));
+        coeffQuotient.numerator /= gcd;
+        coeffQuotient.denominator /= gcd;
+
+        quotient.emplace_back(powerDiff, coeffQuotient);
+
+        // Scale divisor by leading term of the quotient
+        vector<pair<int, Rational>> scaledDivisor;
+        for (const auto& term : divisor) {
+            int newPower = term.first + powerDiff;
+            Rational newCoeff = Rational(
+                term.second.numerator * coeffQuotient.numerator,
+                term.second.denominator * coeffQuotient.denominator
+            );
+            int scaleGCD = GCD(abs(newCoeff.numerator), abs(newCoeff.denominator));
+            newCoeff.numerator /= scaleGCD;
+            newCoeff.denominator /= scaleGCD;
+
+            scaledDivisor.emplace_back(newPower, newCoeff);
+        }
+
+        // Subtract scaled divisor from the current remainder
+        vector<pair<int, Rational>> newRemainder;
+        PolynomSubtract(&remainder, &scaledDivisor, newRemainder);
+
+        // Remove terms with zero coefficients
+        remainder.clear();
+        for (const auto& term : newRemainder) {
+            if (term.second.numerator != 0) {
+                remainder.push_back(term);
+            }
+        }
+
+        // Termination guard: Stop if remainder doesn't reduce
+        if (remainder.empty() || (remainder.size() == dividend.size() && remainder == dividend)) {
+            cout << "Error: Infinite loop detected in DividePolynomials." << endl;
+            break;
+        }
+    }
+
+    // Display final results
+    cout << "--- Final Results ---" << endl;
+    cout << "Quotient Q(x): ";
+    DisplayPolynomial(&quotient);
+    cout << "Remainder R(x): ";
+    DisplayPolynomial(&remainder);
+}
+
+
+
+
+void PolynomialGCD(const vector<pair<int, Rational>>* p1Ptr, const vector<pair<int, Rational>>* p2Ptr, vector<pair<int, Rational>>& gcdResult) {
+    if (p1Ptr == nullptr || p2Ptr == nullptr) {
+        cout << "Error: Null pointer passed to PolynomialGCD." << endl;
+        return;
+    }
+
+    vector<pair<int, Rational>> p1 = *p1Ptr;
+    vector<pair<int, Rational>> p2 = *p2Ptr;
+
+    gcdResult.clear();
+
+    if (!p1.empty() && !p2.empty() && p1.front().first < p2.front().first) {
+        swap(p1, p2);
+    }
+
+    while (!p2.empty()) {
+        vector<pair<int, Rational>> quotient, remainder;
+        DividePolynomials(&p1, &p2, quotient, remainder);
+
+        if (remainder.empty()) {
+            break; // GCD found
+        }
+
+        p1 = p2;
+        p2 = remainder;
+    }
+
+    gcdResult = p1;
+
+    // Final Result
+    cout << "--- GCD of Polynomials ---" << endl;
+    DisplayPolynomial(&gcdResult);
+}
+
+*/
+
 
 bool getValidatedNumber(const char* input, int& number) {
     for (size_t i = 0; input[i] != '\0'; ++i) {
@@ -616,15 +769,18 @@ int main() {
     vector<pair<int, Rational>> pVector;
     vector<pair<int, Rational>> qVector;
     vector<pair<int, Rational>> result;
+    vector<pair<int, Rational>> quotient;
+    vector<pair<int, Rational>> remainder;
 
     while (true) {
         cout << "\nOptions:" << endl;
         cout << "1 - Sum two polynomials" << endl;
         cout << "2 - Subtract two polynomials" << endl;
-        cout << "3 - Quit the application" << endl;
-        cout << "4 - Multiply polynomial by scalar" << endl;
-        cout << "5 - Multiply two polynomials" << endl; 
-        cout << "6 - Find  value of polynomial at a given number" << endl;
+        cout << "3 - Multiply polynomial by scalar" << endl;
+        cout << "4 - Multiply two polynomials" << endl; 
+        cout << "5 - Find  value of polynomial at a given number" << endl;
+        cout << "6 - Divide two polynomials" << endl;
+        cout << "11 - Quit the application" << endl;
             
         int choice = 0;
         bool validChoice = false;
@@ -670,13 +826,9 @@ int main() {
             PolynomSubtract(&pVector, &qVector, result);
             cout << "Result of P(x) - Q(x): ";
             DisplayPolynomial(&result);
-            break;
+            break;      
 
-        case 3:
-            cout << "Thank you for using the Polynomial Calculator. Goodbye!" << endl;
-            return 0;
-
-        case 4: {
+        case 3: {
             Rational scalar;
             bool validScalar = false;
 
@@ -709,7 +861,7 @@ int main() {
             break;
         }
 
-        case 5: { 
+        case 4: { 
             cout << "Enter powers for P(x):" << endl;
             EnterPowers(pPowers, input, pCounter);
 
@@ -728,7 +880,7 @@ int main() {
             break;
         }
 
-        case 6: {
+        case 5: {
             cout << "Enter powers for the polynomial P(x):" << endl;
             EnterPowers(pPowers, input, pCounter);
 
@@ -761,6 +913,32 @@ int main() {
             break;
         }
 
+        case 6: {
+            cout << "Enter powers for the first polynomial P(x):" << endl;
+            EnterPowers(pPowers, input, pCounter);
+
+            EnterCoefficients(pPowers, pCounter, pVector, input);
+            sortVector(pVector);
+
+            cout << "Enter powers for the second polynomial Q(x):" << endl;
+            EnterPowers(qPowers, input, qCounter);
+
+            EnterCoefficients(qPowers, qCounter, qVector, input);
+            sortVector(qVector);
+
+            vector<pair<int, Rational>> gcdResult;
+            //PolynomialGCD(&pVector, &qVector, gcdResult);
+
+            cout << "GCD of P(x) and Q(x): ";
+            DisplayPolynomial(&gcdResult);
+            break;
+        }
+
+
+        case 11:
+            cout << "Thank you for using the Polynomial Calculator. Goodbye!" << endl;
+            return 0;
+
 
         default:
             cout << "Invalid choice. Please enter 1, 2, 3, 4, 5 or 6." << endl;
@@ -770,6 +948,8 @@ int main() {
         pVector.clear();
         qVector.clear();
         result.clear();
+        quotient.clear();
+        remainder.clear();
         pCounter = 0;
         qCounter = 0;
         fill(begin(pPowers), end(pPowers), 0);
