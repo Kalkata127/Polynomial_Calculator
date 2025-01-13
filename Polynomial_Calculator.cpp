@@ -116,11 +116,25 @@ Rational multiplyRationals(const Rational& r1, const Rational& r2) {
 }
 
 Rational divideRationals(const Rational& r1, const Rational& r2) {
+
+    if (r2.numerator == 0) {
+        throw invalid_argument("Division by zero: second rational number's numerator is zero.");
+    }
+
     int numerator = r1.numerator * r2.denominator;
     int denominator = r1.denominator * r2.numerator;
-    int gcd = GCD(numerator, denominator);
-    return Rational(numerator / gcd, denominator / gcd);
+
+    if (denominator == 0) {
+        throw invalid_argument("Invalid rational number: denominator cannot be zero.");
+    }
+
+    int gcd = GCD(abs(numerator), abs(denominator));
+    numerator /= gcd;
+    denominator /= gcd;
+
+    return Rational(numerator, denominator);
 }
+
 
 
 bool isInputValid(const char input[]) {
@@ -181,9 +195,13 @@ bool arePowersValid(const char input[]) {
 }
 
 bool isCoefficientValid(const char input[]) {
+    if (input[0] == '0' && input[1] == '\0') {
+        return true;
+    }
     if (!isInputValid(input)) {
         return false;
     }
+
     bool hasSlash = false, hasMinus = false, inNumber = false;
     int length = 0, denominator = 0;
 
@@ -200,6 +218,10 @@ bool isCoefficientValid(const char input[]) {
         else if (c == '/') {
             if (hasSlash) {
                 cout << "Invalid coefficient: More than one '/' is not allowed!" << endl;
+                return false;
+            }
+            if (!inNumber) {
+                cout << "Invalid coefficient: No numerator before '/'!" << endl;
                 return false;
             }
             hasSlash = true;
@@ -229,6 +251,7 @@ bool isCoefficientValid(const char input[]) {
 
     return true;
 }
+
 
 int splitInput(const char* input, int* output) {
     if (input == nullptr || output == nullptr) {
@@ -306,8 +329,10 @@ bool ProcessRational(const char* input, Rational& rational) {
     int denominator = 0;
     bool isNegative = false;
     bool inDenominator = false;
+    bool hasNumerator = false;
+    bool hasDenominator = false;
 
-    for (int i = 0; input[i] != '\0'; ++i) {
+    for (int i = 0; input[i] != '\0'; i++) {
         if (input[i] == '-') {
             if (i == 0 || (inDenominator && denominator == 0)) {
                 isNegative = true;
@@ -325,9 +350,11 @@ bool ProcessRational(const char* input, Rational& rational) {
         else if (input[i] >= '0' && input[i] <= '9') {
             if (inDenominator) {
                 denominator = denominator * 10 + (input[i] - '0');
+                hasDenominator = true;
             }
             else {
                 numerator = numerator * 10 + (input[i] - '0');
+                hasNumerator = true;
             }
         }
         else {
@@ -335,17 +362,31 @@ bool ProcessRational(const char* input, Rational& rational) {
         }
     }
 
-    if (inDenominator && denominator == 0) {
+    if (!hasNumerator) {
         return false; 
+    }
+
+    if (inDenominator && !hasDenominator) {
+        return false;
+    }
+
+    if (inDenominator && denominator == 0) {
+        return false;
     }
 
     if (isNegative) {
         numerator = -numerator;
     }
 
+    if (numerator == 0) {
+        rational = Rational(0, 1);
+        return true;
+    }
+
     rational = Rational(numerator, inDenominator ? denominator : 1);
     return true;
 }
+
 
 void EnterCoefficients(const int* powers, int powerCount, vector<pair<int, Rational>>& coefficients, char* input) {
     if (powers == nullptr || input == nullptr) {
@@ -667,6 +708,26 @@ void DividePolynomials(const vector<pair<int, Rational>>& P1, const vector<pair<
     }
 }
 
+void PolynomialGCD(const vector<pair<int, Rational>>& P, const vector<pair<int, Rational>>& Q, vector<pair<int, Rational>>& GCD) {
+    vector<pair<int, Rational>> A = P;
+    vector<pair<int, Rational>> B = Q;
+    vector<pair<int, Rational>> quotient, remainder;
+
+    while (!B.empty()) {
+        DividePolynomials(A, B, quotient, remainder);
+        A = B;
+        B = remainder;
+    }
+
+    if (!A.empty()) {
+        Rational leadingCoeff = A.front().second;
+        for (auto& term : A) {
+            term.second = divideRationals(term.second, leadingCoeff);
+        }
+    }
+
+    GCD = A;
+}
 
 bool getValidatedNumber(const char* input, int& number) {
     for (size_t i = 0; input[i] != '\0'; ++i) {
@@ -708,6 +769,7 @@ int main() {
         cout << "4 - Multiply two polynomials" << endl; 
         cout << "5 - Find  value of polynomial at a given number" << endl;
         cout << "6 - Divide two polynomials" << endl;
+        cout << "7. GCD of Polynomials\n";
         cout << "11 - Quit the application" << endl;
             
         int choice = 0;
@@ -864,6 +926,26 @@ int main() {
             DisplayPolynomial(&R);
             break;
             
+        }
+        case 7: {
+            cout << "Enter powers for P(x):" << endl;
+            EnterPowers(pPowers, input, pCounter);
+
+            EnterCoefficients(pPowers, pCounter, pVector, input);
+            sortVector(pVector);
+
+            cout << "Enter powers for Q(x):" << endl;
+            EnterPowers(qPowers, input, qCounter);
+
+            EnterCoefficients(qPowers, qCounter, qVector, input);
+            sortVector(qVector);
+
+            vector<pair<int, Rational>> gcdResult;
+            PolynomialGCD(pVector, qVector, gcdResult);
+
+            cout << "GCD of P(x) and Q(x): ";
+            DisplayPolynomial(&gcdResult);
+            break;
         }
 
 
