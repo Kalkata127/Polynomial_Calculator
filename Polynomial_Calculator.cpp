@@ -1,3 +1,16 @@
+/**
+*
+* Solution to course project # 4
+* Introduction to programming course
+* Faculty of Mathematics and Informatics of Sofia University
+* Winter semester 2023/2024
+*
+* @author Kalin Simeonov
+* @idnumber 8MI0600459* @compiler VC
+*
+* <Main cpp file>
+*
+*/
 #include <iostream>
 #include <vector>
 
@@ -5,6 +18,7 @@ using namespace std;
 
 const int MAX_ARR_SIZE = 50;
 
+// ---------------------- Utils -------------------------------------
 struct Rational {
     int numerator;
     int denominator;
@@ -27,6 +41,221 @@ void sortVector(vector<pair<int, Rational>>& vec) {
     }
 }
 
+int GCD(int a, int b) {
+    while (b != 0) {
+        int temp = b;
+        b = a % b;
+        a = temp;
+    }
+    return abs(a);
+}
+
+int LCM(int a, int b) {
+    if (a == 0 || b == 0) return 0;
+    return abs(a * b) / GCD(a, b);
+}
+
+Rational BinomialCoefficient(int n, int k) {
+    if (k < 0 || k > n) return createRational(0, 1); 
+    if (k == 0 || k == n) return createRational(1, 1); 
+
+    Rational result = createRational(1, 1);
+
+    for (int i = 1; i <= k; i++) {
+        result = multiplyRationals(result, createRational(n - i + 1, 1));
+        result = simplifyFraction(result); 
+
+        result = divideRationals(result, createRational(i, 1));
+        result = simplifyFraction(result);
+    }
+
+    return result;
+}
+
+
+// ---------------------- Rational Operations -----------------------
+Rational addRationals(const Rational& r1, const Rational& r2) {
+    int numerator = r1.numerator * r2.denominator + r2.numerator * r1.denominator;
+    int denominator = r1.denominator * r2.denominator;
+    int gcd = GCD(numerator, denominator);
+    return createRational(numerator / gcd, denominator / gcd);
+}
+
+Rational subtractRationals(const Rational& r1, const Rational& r2) {
+    int numerator = r1.numerator * r2.denominator - r2.numerator * r1.denominator;
+    int denominator = r1.denominator * r2.denominator;
+    int gcd = GCD(numerator, denominator);
+    return createRational(numerator / gcd, denominator / gcd);
+}
+
+Rational multiplyRationals(const Rational& r1, const Rational& r2) {
+    int numerator = r1.numerator * r2.numerator;
+    int denominator = r1.denominator * r2.denominator;
+    int gcd = GCD(numerator, denominator);
+    return createRational(numerator / gcd, denominator / gcd);
+}
+
+Rational divideRationals(const Rational& r1, const Rational& r2) {
+    if (r2.numerator == 0) {
+        cout << "Error: Division by zero. Returning default rational (0/1)." << endl;
+        return createRational(0, 1);
+    }
+
+    int numerator = r1.numerator * r2.denominator;
+    int denominator = r1.denominator * r2.numerator;
+
+    if (denominator == 0) {
+        cout << "Error: Invalid rational number. Denominator cannot be zero. Returning default rational (0/1)." << endl;
+        return createRational(0, 1);
+    }
+
+    int gcd = GCD(abs(numerator), abs(denominator));
+    numerator /= gcd;
+    denominator /= gcd;
+
+    return createRational(numerator, denominator);
+}
+
+Rational sqrtRational(const Rational& r) {
+    if (r.numerator < 0 || r.denominator <= 0) {
+        cout << "Error: Square root of a negative or invalid rational number is undefined. Returning default rational (0/1)." << endl;
+        return createRational(0, 1);
+    }
+
+    int sqrtNumerator = sqrt(r.numerator);
+    int sqrtDenominator = sqrt(r.denominator);
+
+    if (sqrtNumerator * sqrtNumerator == r.numerator && sqrtDenominator * sqrtDenominator == r.denominator) {
+        return createRational(sqrtNumerator, sqrtDenominator);
+    }
+    else {
+        cout << "Error: Result of square root is not a rational number. Returning default rational (0/1)." << endl;
+        return createRational(0, 1);
+    }
+}
+
+Rational powRational(const Rational& base, int exponent) {
+    if (exponent == 0) return createRational(1, 1);
+
+    Rational result = base;
+    for (int i = 1; i < exponent; i++) {
+        result = multiplyRationals(result, base);
+    }
+    return result;
+}
+
+Rational AddRational(const Rational& r1, const Rational& r2) {
+    int lcm = LCM(r1.denominator, r2.denominator);
+    int numerator1 = r1.numerator * (lcm / r1.denominator);
+    int numerator2 = r2.numerator * (lcm / r2.denominator);
+
+    int sumNumerator = numerator1 + numerator2;
+    int gcd = GCD(sumNumerator, lcm);
+
+    return createRational(sumNumerator / gcd, lcm / gcd);
+}
+
+Rational simplifyFraction(const Rational& r) {
+   int gcd = GCD(abs(r.numerator), abs(r.denominator));
+   return { r.numerator / gcd, r.denominator / gcd };
+}
+
+
+// ---------------------- Displayment -------------------------------
+void DisplayPolynomial(const vector<pair<int, Rational>> &vec) {
+    for (size_t i = 0; i < vec.size(); i++) {
+        const pair<int, Rational> term = vec[i];
+        int power = term.first;
+        Rational coeff = term.second;
+
+        if (coeff.numerator == 0) continue;
+
+        if (coeff.numerator > 0 && i > 0) {
+            cout << "+";
+        }
+        cout << coeff.numerator;
+        if (coeff.denominator != 1) cout << "/" << coeff.denominator;
+
+        if (power != 0) cout << "x^" << power << " ";
+    }
+    cout << endl;
+}
+
+void DisplayRoots(const vector<pair<Rational, int>>& factors) {
+    cout << "RATIONAL ROOTS:" << endl;
+    for (size_t i = 0; i < factors.size(); i++) {
+        PrintRoot(factors[i].first);
+        cout << " -> " << factors[i].second << "-fold root" << endl;
+    }
+}
+
+void PrintRational(const Rational& r) {
+    cout << r.numerator;
+    if (r.denominator != 1) {
+        cout << "/" << r.denominator;
+    }
+}
+
+void PrintPolynomial(const vector<pair<int, Rational>>& polynomial, const Rational& shift) {
+    cout << "P(x + "; PrintRational(shift); cout << ") = ";
+
+    bool firstTerm = true;
+    for (size_t i = 0; i < polynomial.size(); i++) {
+        if (polynomial[i].second.numerator == 0) continue;
+
+        if (!firstTerm) cout << " + ";
+        firstTerm = false;
+
+        if (polynomial[i].second.numerator != 1 || polynomial[i].second.denominator != 1 || polynomial[i].first == 0) {
+            cout << "("; PrintRational(polynomial[i].second); cout << ")";
+        }
+
+        if (polynomial[i].first > 0) {
+            cout << "(x + "; PrintRational(shift); cout << ")";
+            if (polynomial[i].first > 1) cout << "^" << polynomial[i].first;
+        }
+    }
+    cout << endl;
+}
+
+void displayFactors(const vector<pair<Rational, int>>& factors) {
+    for (size_t i = 0; i < factors.size(); i++) {
+        const pair<Rational, int>& factor = factors[i];
+        Rational root = factor.first;
+        int multiplicity = factor.second;
+
+        if (i > 0) {
+            cout << " * ";
+        }
+
+        cout << "(x ";
+        if (root.numerator < 0) {
+            cout << "+ " << -root.numerator;
+        }
+        else {
+            cout << "- " << root.numerator;
+        }
+
+        if (root.denominator != 1 && root.denominator != -1) {
+            cout << "/" << abs(root.denominator);
+        }
+        cout << ")";
+
+        if (multiplicity > 1) {
+            cout << "^" << multiplicity;
+        }
+    }
+    cout << endl;
+}
+
+void PrintRoot(const Rational& root) {
+    cout << "x = ";
+    if (root.denominator == -1) cout << -root.numerator;
+    else if (root.denominator == 1) cout << root.numerator;
+    else cout << root.numerator << "/" << root.denominator;
+}
+
+// ---------------------- Input Handling ----------------------------
 void getInput(char* input) {
     if (input == nullptr) return;
     bool validInput = false;
@@ -57,375 +286,34 @@ void getInput(char* input) {
     }
 }
 
-void DisplayPolynomial(const vector<pair<int, Rational>>& vec) {
-    for (size_t i = 0; i < vec.size(); ++i) {
-        const auto& term = vec[i];
-        int power = term.first;
-        const Rational& coeff = term.second;
-
-        if (coeff.numerator == 0) continue;
-
-        if (coeff.numerator > 0 && i > 0) {
-            cout << "+";
-        }
-        cout << coeff.numerator;
-        if (coeff.denominator != 1) cout << "/" << coeff.denominator;
-
-        if (power != 0) cout << "x^" << power << " ";
-    }
-    cout << endl;
-}
-
-int GCD(int a, int b) {
-    while (b != 0) {
-        int temp = b;
-        b = a % b;
-        a = temp;
-    }
-    return abs(a);
-}
-
-int LCM(int a, int b) {
-    if (a == 0 || b == 0) return 0;
-    return abs(a * b) / GCD(a, b);
-}
-
-Rational addRationals(const Rational& r1, const Rational& r2) {
-    int numerator = r1.numerator * r2.denominator + r2.numerator * r1.denominator;
-    int denominator = r1.denominator * r2.denominator;
-    int gcd = GCD(numerator, denominator);
-    return createRational(numerator / gcd, denominator / gcd);
-}
-
-Rational subtractRationals(const Rational& r1, const Rational& r2) {
-    int numerator = r1.numerator * r2.denominator - r2.numerator * r1.denominator;
-    int denominator = r1.denominator * r2.denominator;
-    int gcd = GCD(numerator, denominator);
-    return createRational(numerator / gcd, denominator / gcd);
-}
-
-Rational multiplyRationals(const Rational& r1, const Rational& r2) {
-    int numerator = r1.numerator * r2.numerator;
-    int denominator = r1.denominator * r2.denominator;
-    int gcd = GCD(numerator, denominator);
-    return createRational(numerator / gcd, denominator / gcd);
-}
-
-Rational divideRationals(const Rational& r1, const Rational& r2) {
-
-    if (r2.numerator == 0) {
-        throw invalid_argument("Division by zero: second rational number's numerator is zero.");
-    }
-
-    int numerator = r1.numerator * r2.denominator;
-    int denominator = r1.denominator * r2.numerator;
-
-    if (denominator == 0) {
-        throw invalid_argument("Invalid rational number: denominator cannot be zero.");
-    }
-
-    int gcd = GCD(abs(numerator), abs(denominator));
-    numerator /= gcd;
-    denominator /= gcd;
-
-    return createRational(numerator, denominator);
-}
-
-Rational sqrtRational(const Rational& r) {
-    if (r.numerator < 0 || r.denominator <= 0) {
-        throw invalid_argument("Square root of a negative or invalid rational number is undefined.");
-    }
-
-    int sqrtNumerator = sqrt(r.numerator);
-    int sqrtDenominator = sqrt(r.denominator);
-
-    if (sqrtNumerator * sqrtNumerator == r.numerator && sqrtDenominator * sqrtDenominator == r.denominator) {
-        return createRational(sqrtNumerator, sqrtDenominator);
-    }
-    else {
-        throw invalid_argument("Result of square root is not rational.");
-    }
-}
-
-bool isInputValid(const char input[]) {
-    if ((input == nullptr) ? (cout << "Error: Null pointer passed as input!" << endl, true) : false) return false;
-
-    if ((input[0] == '\0') ? (cout << "Input is empty!" << endl, true) : false) return false;
-
-    bool hasNonSpaceCharacter = false;
-
-    for (int i = 0; input[i] != '\0'; i++) {
-        char c = input[i];
-
-        if (!(c == '-' || c == '/' || (c >= '0' && c <= '9') || c == ' ')) {
-            cout << "Input contains forbidden characters!" << endl;
-            return false;
-        }
-
-        if (c != ' ') {
-            hasNonSpaceCharacter = true;
-        }
-    }
-
-    if (!hasNonSpaceCharacter) {
-        cout << "Input can't be empty or contain only spaces!" << endl;
-        return false;
-    }
-
-    return true;
-}
-
-bool arePowersValid(const char input[]) {
-    const int Int_max = 2147483647; 
-    long long power = 0;            
-    bool inNumber = false;
-
-    for (int i = 0; input[i] != '\0'; i++) {
-        char c = input[i];
-
-        if (c >= '0' && c <= '9') {            
-            power = power * 10 + (c - '0');
-            if (power > Int_max) {
-                cout << "Input contains a power that is too large!" << endl;
-                return false;
-            }
-            inNumber = true;
-        }
-        else if (c == ' ' && inNumber) {     
-            power = 0;
-            inNumber = false;
-        }
-        else if (c != ' ') {                 
-            cout << "Input contains invalid power format!" << endl;
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool isCoefficientValid(const char input[]) {
-    if (input[0] == '0' && input[1] == '\0') {
-        return true;
-    }
-    if (!isInputValid(input)) {
-        return false;
-    }
-
-    bool hasSlash = false, hasMinus = false, inNumber = false;
-    int length = 0, denominator = 0;
-
-    for (int i = 0; input[i] != '\0'; i++, length++) {
-        char c = input[i];
-
-        if (c == '-') {
-            if (i != 0 || hasMinus) {
-                cout << "Invalid coefficient: '-' can only appear at the beginning!" << endl;
-                return false;
-            }
-            hasMinus = true;
-        }
-        else if (c == '/') {
-            if (hasSlash) {
-                cout << "Invalid coefficient: More than one '/' is not allowed!" << endl;
-                return false;
-            }
-            if (!inNumber) {
-                cout << "Invalid coefficient: No numerator before '/'!" << endl;
-                return false;
-            }
-            hasSlash = true;
-            inNumber = false;
-        }
-        else if (c >= '0' && c <= '9') {
-            if (hasSlash) {
-                denominator = denominator * 10 + (c - '0');
-            }
-            inNumber = true;
-        }
-        else {
-            cout << "Invalid character in coefficient!" << endl;
-            return false;
-        }
-    }
-
-    if (length > 0 && (input[length - 1] == '/' || input[length - 1] == '-')) {
-        cout << "Invalid coefficient: Cannot end with '/' or '-'" << endl;
-        return false;
-    }
-
-    if (hasSlash && denominator == 0) {
-        cout << "Invalid coefficient: Denominator cannot be zero!" << endl;
-        return false;
-    }
-
-    return true;
-}
-
-int splitInput(const char* input, int* output) {
-    if (input == nullptr || output == nullptr) {
-        return 0;
-    }
-
-    int index = 0, num = 0;
-    bool isNeg = false, inNum = false;
-
-    while (*input != '\0') {
-        if (*input == '-') {
-            if (inNum) {
-                cout << "Invalid input: multiple '-' in a single number" << endl;
-                return -1;
-            }
-            isNeg = true;
-        }
-        else if (*input >= '0' && *input <= '9') {
-            num = num * 10 + (*input - '0');
-            inNum = true;
-        }
-        else if (*input == ' ') {
-            if (inNum) {
-                output[index++] = isNeg ? -num : num;
-                num = 0;
-                isNeg = false;
-                inNum = false;
-            }
-        }
-        input++;
-    }
-
-    if (inNum) {
-        output[index++] = isNeg ? -num : num;
-    }
-
-    return index;
-}
-
-void ProcessPowers(char* input, int* pPowers, int& counter) {
-    if (input == nullptr || pPowers == nullptr) {
-        return;
-    }
-    counter = splitInput(input, pPowers);
-
-    if (counter == -1) {
-        cout << "Error processing input for powers" << endl;
-        return;
-    }
-}
-
-int RemoveDuplicates(int* powers, int count) {
-    int uniqueCount = 0;
-
-    for (int i = 0; i < count; i++) {
-        bool isDuplicate = false;
-
-        for (int j = 0; j < uniqueCount; j++) {
-            if (powers[i] == powers[j]) {
-                isDuplicate = true;
-                break;
-            }
-        }
-
-        if (!isDuplicate) {
-            powers[uniqueCount++] = powers[i];
-        }
-    }
-
-    return uniqueCount;
-}
-
-bool ProcessRational(const char* input, Rational& rational) {
-    int numerator = 0;
-    int denominator = 0;
-    bool isNegative = false;
-    bool inDenominator = false;
-    bool hasNumerator = false;
-    bool hasDenominator = false;
-
-    for (int i = 0; input[i] != '\0'; i++) {
-        if (input[i] == '-') {
-            if (i == 0 || (inDenominator && denominator == 0)) {
-                isNegative = true;
-            }
-            else {
-                return false;
-            }
-        }
-        else if (input[i] == '/') {
-            if (inDenominator) {
-                return false;
-            }
-            inDenominator = true;
-        }
-        else if (input[i] >= '0' && input[i] <= '9') {
-            if (inDenominator) {
-                denominator = denominator * 10 + (input[i] - '0');
-                hasDenominator = true;
-            }
-            else {
-                numerator = numerator * 10 + (input[i] - '0');
-                hasNumerator = true;
-            }
-        }
-        else {
-            return false;
-        }
-    }
-
-    if (!hasNumerator) {
-        return false; 
-    }
-
-    if (inDenominator && !hasDenominator) {
-        return false;
-    }
-
-    if (inDenominator && denominator == 0) {
-        return false;
-    }
-
-    if (isNegative) {
-        numerator = -numerator;
-    }
-
-    if (numerator == 0) {
-        rational = createRational(0, 1);
-        return true;
-    }
-
-    rational = createRational(numerator, inDenominator ? denominator : 1);
-    return true;
-}
-
-void EnterCoefficients(const int* powers, int& powerCount, vector<pair<int, Rational>>& coefficients, char* input) {
+void EnterCoefficients(const int* powers, int powerCount, vector<pair<int, Rational>>& coefficients, char* input) {
     if (powers == nullptr || input == nullptr) {
         cout << "Error: Null pointer passed to EnterCoefficients." << endl;
         return;
     }
 
+    coefficients.clear();
+
     for (int i = 0; i < powerCount; i++) {
         bool valid = false;
+        Rational coefficient;
 
         do {
             cout << "Enter coefficient for power " << powers[i] << ": ";
             getInput(input);
 
             if (isCoefficientValid(input)) {
-                Rational coefficient;
                 ProcessRational(input, coefficient);
-
-                if (!(powers[i] == 0 && coefficient.numerator == 0)) {
-                    coefficients.emplace_back(powers[i], coefficient);
-                }
-                else if (powers[i] == 0 && coefficient.numerator == 0) {
-                    --powerCount;
-                }
-
                 valid = true;
             }
             else {
-                cout << "Invalid coefficient. Please re-enter." << endl;
+                cout << "Invalid coefficient, please re-enter." << endl;
             }
         } while (!valid);
+
+        if (coefficient.numerator != 0) {
+            coefficients.emplace_back(powers[i], coefficient);
+        }
     }
 }
 
@@ -457,116 +345,343 @@ void EnterPowers(int* powers, char* input, int& counter) {
     }
 }
 
-Rational AddRational(const Rational& r1, const Rational& r2) {
-    int lcm = LCM(r1.denominator, r2.denominator);
-    int numerator1 = r1.numerator * (lcm / r1.denominator);
-    int numerator2 = r2.numerator * (lcm / r2.denominator);
+Rational InputScalar(char* input) {
+    Rational scalar;
 
-    int sumNumerator = numerator1 + numerator2;
-    int gcd = GCD(sumNumerator, lcm);
-
-    return createRational(sumNumerator / gcd, lcm / gcd);
+    while (true) {
+        cout << "Enter scalar (as a rational number): ";
+        getInput(input);
+        if (isCoefficientValid(input) && ProcessRational(input, scalar)) {
+            break;
+        }
+        cout << "Invalid scalar. Please re-enter." << endl;
+    }
+    return scalar;
 }
 
+void InputPolynomial(vector<pair<int, Rational>>& poly, int* powers, char* input, int& counter) {
+    EnterPowers(powers, input, counter);
+    EnterCoefficients(powers, counter, poly, input);
+    sortVector(poly);
+}
+
+int splitInput(const char* input, int* output) {
+    if (!input || !output) return 0;
+
+    int index = 0, num = 0;
+    bool isNeg = false, inNum = false;
+
+    while (*input != '\0') {
+        if (*input == '-') {
+            if (inNum) return -1;
+            isNeg = true;
+        }
+        else if (isDigit(*input)) {
+            num = num * 10 + (*input - '0');
+            inNum = true;
+        }
+        else if (*input == ' ' && inNum) {
+            output[index++] = isNeg ? -num : num;
+            num = 0, isNeg = false, inNum = false;
+        }
+        input++;
+    }
+
+    if (inNum) {
+        output[index++] = isNeg ? -num : num;
+    }
+
+    return index;
+}
+
+
+// ---------------------- Input Validating --------------------------
+bool isDigit(char c) {
+    return c >= '0' && c <= '9';
+}
+
+bool isInputValid(const char input[]) {
+    if (input == nullptr) {
+        cout << "Error: Null pointer passed as input!" << endl;
+        return false;
+    }
+
+    if (input[0] == '\0') {
+        cout << "Input is empty!" << endl;
+        return false;
+    }
+
+    bool hasNonSpaceCharacter = false;
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        char c = input[i];
+
+        if (!(c == '-' || c == '/' || isDigit(c) || c == ' ')) {
+            cout << "Input contains forbidden characters!" << endl;
+            return false;
+        }
+
+        if (c != ' ') {
+            hasNonSpaceCharacter = true;
+        }
+    }
+
+    if (!hasNonSpaceCharacter) {
+        cout << "Input can't be empty or contain only spaces!" << endl;
+        return false;
+    }
+
+    return true;
+}
+
+bool arePowersValid(const char input[]) {
+    const int Int_max = 2147483647; 
+    long long power = 0;            
+    bool inNumber = false;
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        char c = input[i];
+
+        if (isDigit(c)) {            
+            power = power * 10 + (c - '0');
+            if (power > Int_max) {
+                cout << "Input contains a power that is too large!" << endl;
+                return false;
+            }
+            inNumber = true;
+        }
+        else if (c == ' ' && inNumber) {     
+            power = 0;
+            inNumber = false;
+        }
+        else if (c != ' ') {                 
+            cout << "Input contains invalid power format!" << endl;
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool isCoefficientValid(const char input[]) {
+    if (input[0] == '0' && input[1] == '\0') return true;
+    if (!isInputValid(input)) return false;
+
+    bool hasSlash = false, hasMinus = false;
+    int i = 0, denominator = 0;
+
+    if (input[i] == '-') {
+        hasMinus = true;
+        i++;
+    }
+
+    bool inNumber = false;
+    for (i; input[i] != '\0'; i++) {
+        char c = input[i];
+
+        if (c == '/') {
+            if (hasSlash || !inNumber) return false;
+            hasSlash = true;
+            inNumber = false;
+        }
+        else if (isDigit(c)) {
+            inNumber = true;
+            if (hasSlash) denominator = denominator * 10 + (c - '0');
+        }
+        else return false;
+    }
+
+    return inNumber && (!hasSlash || denominator != 0);
+}
+
+bool getValidatedNumber(const char* input, int& number) {
+    for (size_t i = 0; input[i] != '\0'; i++) {
+        if (i >= 2 || input[i] < '0' || input[i] > '9') { 
+            cout << "Invalid input."<<endl;
+            return false;
+        }
+    }
+
+    number = 0;
+    for (size_t i = 0; input[i] != '\0'; i++) {
+        number = number * 10 + (input[i] - '0');
+    }
+
+    return true;
+}
+
+
+// ---------------------- Processing --------------------------------
+void ProcessPowers(char* input, int* pPowers, int& counter) {
+    if (input == nullptr || pPowers == nullptr) {
+        return;
+    }
+    counter = splitInput(input, pPowers);
+
+    if (counter == -1) {
+        cout << "Error processing input for powers" << endl;
+        return;
+    }
+}
+
+bool ProcessRational(const char* input, Rational& rational) {
+    int numerator = 0, denominator = 0;
+    bool isNegative = false, inDenominator = false;
+
+    if (input[0] == '0' && input[1] == '\0') {
+        rational = createRational(0, 1);
+        return true; 
+    }
+
+    for (int i = 0; input[i] != '\0'; i++) {
+        char c = input[i];
+
+        if (c == '-') {
+            if (i == 0 || (inDenominator && denominator == 0)) isNegative = true;
+            else return false;
+        }
+        else if (c == '/') {
+            if (inDenominator || numerator == 0) return false;
+            inDenominator = true;
+        }
+        else if (isDigit(c)) {
+            if (inDenominator) {
+                denominator = denominator * 10 + (c - '0');
+            }
+            else {
+                numerator = numerator * 10 + (c - '0');
+            }
+        }
+        else return false;
+    }
+
+    if (inDenominator && denominator == 0) return false;
+
+    if (numerator == 0) {
+        rational = createRational(0, 1);
+        return true;
+    }
+
+    if (isNegative) numerator = -numerator;
+    rational = createRational(numerator, inDenominator ? denominator : 1);
+    return true;
+}
+
+int RemoveDuplicates(int* powers, int count) {
+    int uniqueCount = 0;
+
+    for (int i = 0; i < count; i++) {
+        bool isDuplicate = false;
+
+        for (int j = 0; j < uniqueCount; j++) {
+            if (powers[i] == powers[j]) {
+                isDuplicate = true;
+                break;
+            }
+        }
+
+        if (!isDuplicate) {
+            powers[uniqueCount++] = powers[i];
+        }
+    }
+
+    return uniqueCount;
+}
+
+
+// ---------------------- Operations --------------------------------
 void PolynomSum(vector<pair<int, Rational>>* v1Ptr, vector<pair<int, Rational>>* v2Ptr, vector<pair<int, Rational>>& resVec) {
-    if (v1Ptr == nullptr || v2Ptr == nullptr) {
+    if (!v1Ptr || !v2Ptr) {
         cout << "Error: Null pointer passed to PolynomSum." << endl;
         return;
     }
 
-    vector<pair<int, Rational>>& vec1 = *v1Ptr, & vec2 = *v2Ptr;
+    const vector<pair<int, Rational>>& vec1 = *v1Ptr;
+    const vector<pair<int, Rational>>& vec2 = *v2Ptr;
 
     size_t idV1 = 0, idV2 = 0;
 
-    while (idV1 < vec1.size() && idV2 < vec2.size()) {
-        pair<int, Rational> term1 = vec1[idV1], term2 = vec2[idV2];
-
-        if (term1.first == term2.first) { 
-            Rational sumCoeff = AddRational(term1.second, term2.second);
-            resVec.emplace_back(term1.first, sumCoeff);
-            idV1++;
-            idV2++;
+    while (idV1 < vec1.size() || idV2 < vec2.size()) {
+        if (idV1 < vec1.size() && (idV2 >= vec2.size() || vec1[idV1].first > vec2[idV2].first)) {
+            resVec.push_back(vec1[idV1++]);
         }
-        else if (term1.first > term2.first) { 
-            resVec.emplace_back(term1.first, term1.second);
-            idV1++;
+        else if (idV2 < vec2.size() && (idV1 >= vec1.size() || vec2[idV2].first > vec1[idV1].first)) {
+            resVec.push_back(vec2[idV2++]);
         }
         else {
-            resVec.emplace_back(term2.first, term2.second);
+            Rational sumCoeff = AddRational(vec1[idV1].second, vec2[idV2].second);
+            resVec.emplace_back(vec1[idV1].first, sumCoeff);
+            idV1++;
             idV2++;
         }
-    }
-
-    while (idV1 < vec1.size()) {
-        pair<int, Rational> remainingTerm = vec1[idV1]; 
-        resVec.emplace_back(remainingTerm.first, remainingTerm.second);
-        idV1++;
-    }
-
-    while (idV2 < vec2.size()) {
-        pair<int, Rational> remainingTerm = vec2[idV2]; 
-        resVec.emplace_back(remainingTerm.first, remainingTerm.second);
-        idV2++;
     }
 }
 
 void PolynomSubtract(vector<pair<int, Rational>>* v1Ptr, vector<pair<int, Rational>>* v2Ptr, vector<pair<int, Rational>>& resVec) {
-    if (v1Ptr == nullptr || v2Ptr == nullptr) {
+    if (!v1Ptr || !v2Ptr) {
         cout << "Error: Null pointer passed to PolynomSubtract." << endl;
         return;
     }
 
-    vector<pair<int, Rational>>& vec1 = *v1Ptr;
-    vector<pair<int, Rational>>& vec2 = *v2Ptr;
+    const vector<pair<int, Rational>>& vec1 = *v1Ptr;
+    const vector<pair<int, Rational>>& vec2 = *v2Ptr;
 
     size_t idV1 = 0, idV2 = 0;
-
     resVec.clear();
 
-    while (idV1 < vec1.size() && idV2 < vec2.size()) {
-        pair<int, Rational> term1 = vec1[idV1], term2 = vec2[idV2];
-
-        if (term1.first == term2.first) {
-            Rational diffCoeff = AddRational(term1.second, createRational(-term2.second.numerator, term2.second.denominator));
+    while (idV1 < vec1.size() || idV2 < vec2.size()) {
+        if (idV1 < vec1.size() && (idV2 >= vec2.size() || vec1[idV1].first > vec2[idV2].first)) {
+            resVec.push_back(vec1[idV1++]);
+        }
+        else if (idV2 < vec2.size() && (idV1 >= vec1.size() || vec2[idV2].first > vec1[idV1].first)) {
+            resVec.emplace_back(vec2[idV2].first, createRational(-vec2[idV2].second.numerator, vec2[idV2].second.denominator));
+            idV2++;
+        }
+        else {
+            Rational diffCoeff = AddRational(vec1[idV1].second, createRational(-vec2[idV2].second.numerator, vec2[idV2].second.denominator));
             if (diffCoeff.numerator != 0) {
-                resVec.emplace_back(term1.first, diffCoeff);
+                resVec.emplace_back(vec1[idV1].first, diffCoeff);
             }
             idV1++;
             idV2++;
         }
-        else if (term1.first > term2.first) {
-            resVec.emplace_back(term1.first, term1.second);
-            idV1++;
-        }
-        else {
-            Rational negCoeff = createRational(-term2.second.numerator, term2.second.denominator);
-            resVec.emplace_back(term2.first, negCoeff);
-            idV2++;
-        }
     }
+}
 
-    while (idV1 < vec1.size()) {
-        resVec.emplace_back(vec1[idV1].first, vec1[idV1].second);
-        idV1++;
-    }
+void HandlePolynomialAddition(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>& qVector, vector<pair<int, Rational>>& result, int* pPowers, int* qPowers, char* input, int& pCounter, int& qCounter) {
+    cout << "Enter powers for P(x):" << endl;
+    InputPolynomial(pVector, pPowers, input, pCounter);
 
-    while (idV2 < vec2.size()) {
-        Rational negCoeff = createRational(-vec2[idV2].second.numerator, vec2[idV2].second.denominator);
-        resVec.emplace_back(vec2[idV2].first, negCoeff);
-        idV2++;
-    }
+    cout << "Enter powers for Q(x):" << endl;
+    InputPolynomial(qVector, qPowers, input, qCounter);
+
+    PolynomSum(&pVector, &qVector, result);
+    cout << "Result of P(x) + Q(x): ";
+    DisplayPolynomial(result);
+}
+
+void HandlePolynomialSubtraction(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>& qVector, vector<pair<int, Rational>>& result, int* pPowers, int* qPowers, char* input, int& pCounter, int& qCounter) {
+    cout << "Enter powers for P(x):" << endl;
+    InputPolynomial(pVector, pPowers, input, pCounter);
+
+    cout << "Enter powers for Q(x):" << endl;
+    InputPolynomial(qVector, qPowers, input, qCounter);
+
+    PolynomSubtract(&pVector, &qVector, result);
+    cout << "Result of P(x) - Q(x): ";
+    DisplayPolynomial(result);
 }
 
 void MultiplyByScalar(const Rational& scalar, vector<pair<int, Rational>>& polynomial) {
     if (scalar.numerator == 0) {
-        for (size_t i = 0; i < polynomial.size(); ++i) {
+        for (size_t i = 0; i < polynomial.size(); i++) {
             polynomial[i].second.numerator = 0; 
             polynomial[i].second.denominator = 1; 
         }
         return;
     }
 
-    for (size_t i = 0; i < polynomial.size(); ++i) {
+    for (size_t i = 0; i < polynomial.size(); i++) {
         polynomial[i].second.numerator *= scalar.numerator;
 
         polynomial[i].second.denominator *= scalar.denominator;
@@ -582,86 +697,69 @@ void MultiplyByScalar(const Rational& scalar, vector<pair<int, Rational>>& polyn
     }
 }
 
-void MultiplyPolynomials(const vector<pair<int, Rational>>& p1,const vector<pair<int, Rational>>& p2,vector<pair<int, Rational>>& result)
-{
+void MultiplyPolynomials(const vector<pair<int, Rational>>& p1, const vector<pair<int, Rational>>& p2, vector<pair<int, Rational>>& result) {
     result.clear();
-
-    if (p1.empty() || p2.empty()) {
-        return;
-    }
+    if (p1.empty() || p2.empty()) return;
 
     vector<pair<int, Rational>> tempResult;
 
     for (size_t i = 0; i < p1.size(); i++) {
         for (size_t j = 0; j < p2.size(); j++) {
+            int power = p1[i].first + p2[j].first;
             Rational coefficient = createRational(
                 p1[i].second.numerator * p2[j].second.numerator,
                 p1[i].second.denominator * p2[j].second.denominator
             );
-
 
             if (coefficient.denominator < 0) {
                 coefficient.numerator = -coefficient.numerator;
                 coefficient.denominator = -coefficient.denominator;
             }
 
-            int power = p1[i].first + p2[j].first;
+            bool combined = false;
+            for (size_t k = 0; k < tempResult.size(); k++) {
+                if (tempResult[k].first == power) {
+                    tempResult[k].second = AddRational(tempResult[k].second, coefficient);
+                    combined = true;
+                    break;
+                }
+            }
 
-            tempResult.push_back({ power, coefficient });
+            if (!combined) {
+                tempResult.emplace_back(power, coefficient);
+            }
         }
     }
 
     for (size_t i = 0; i < tempResult.size(); i++) {
-        bool combined = false;
-        for (size_t j = 0; j < result.size(); j++) {
-            if (tempResult[i].first == result[j].first) {
-                result[j].second.numerator =
-                    result[j].second.numerator * tempResult[i].second.denominator +
-                    tempResult[i].second.numerator * result[j].second.denominator;
-                result[j].second.denominator *= tempResult[i].second.denominator;
-
-                int gcd = GCD(abs(result[j].second.numerator), abs(result[j].second.denominator));
-                result[j].second.numerator /= gcd;
-                result[j].second.denominator /= gcd;
-
-                if (result[j].second.denominator < 0) {
-                    result[j].second.numerator = -result[j].second.numerator;
-                    result[j].second.denominator = -result[j].second.denominator;
-                }
-
-                combined = true;
-                break;
-            }
-        }
-
-        if (!combined) {
-
+        if (tempResult[i].second.numerator != 0) {
             result.emplace_back(tempResult[i]);
         }
     }
+
     sortVector(result);
 }
 
 void EvaluatePolynomial(const vector<pair<int, Rational>>& polynomial, const Rational& input, Rational& result) {
     result = createRational(0, 1);
+    Rational powerValue = createRational(1, 1);
 
-    for (int i = 0; i < polynomial.size(); ++i) {
-        const int power = polynomial[i].first;
+    for (size_t i = 0; i < polynomial.size(); i++) {
+        int power = polynomial[i].first;
         const Rational& coefficient = polynomial[i].second;
 
-        Rational powerResult = createRational(1, 1);
-        for (int powerStep = 0; powerStep < power; ++powerStep) {
-            powerResult.numerator *= input.numerator;
-            powerResult.denominator *= input.denominator;
+        Rational xPower = createRational(1, 1);
+        for (int j = 0; j < power; j++) {
+            xPower.numerator *= input.numerator;
+            xPower.denominator *= input.denominator;
         }
 
-        Rational termResult = createRational(
-            coefficient.numerator * powerResult.numerator,
-            coefficient.denominator * powerResult.denominator
-        );
+        Rational term;
+        term.numerator = coefficient.numerator * xPower.numerator;
+        term.denominator = coefficient.denominator * xPower.denominator;
 
-        result.numerator = result.numerator * termResult.denominator + termResult.numerator * result.denominator;
-        result.denominator *= termResult.denominator;
+        result.numerator = result.numerator * term.denominator + term.numerator * result.denominator;
+        result.denominator *= term.denominator;
 
         int gcd = GCD(abs(result.numerator), abs(result.denominator));
         result.numerator /= gcd;
@@ -672,11 +770,6 @@ void EvaluatePolynomial(const vector<pair<int, Rational>>& polynomial, const Rat
             result.denominator = -result.denominator;
         }
     }
-}
-
-Rational simplifyFraction(const Rational& r) {
-   int gcd = GCD(abs(r.numerator), abs(r.denominator));
-   return { r.numerator / gcd, r.denominator / gcd };
 }
 
 void DividePolynomials(const vector<pair<int, Rational>>& P1, const vector<pair<int, Rational>>& P2, vector<pair<int, Rational>>& Q, vector<pair<int, Rational>>& R) {
@@ -690,15 +783,18 @@ void DividePolynomials(const vector<pair<int, Rational>>& P1, const vector<pair<
         Q.emplace_back(powerDiff, coeffQuotient);
 
         vector<pair<int, Rational>> tempPoly;
-        for (const auto& term : P2) {
-            tempPoly.emplace_back(term.first + powerDiff, createRational(term.second.numerator * coeffQuotient.numerator, term.second.denominator * coeffQuotient.denominator));
+        for (size_t i = 0; i < P2.size(); i++) {
+            tempPoly.emplace_back(
+                P2[i].first + powerDiff,
+                createRational(P2[i].second.numerator * coeffQuotient.numerator, P2[i].second.denominator * coeffQuotient.denominator)
+            );
         }
 
         vector<pair<int, Rational>> newR;
         size_t i = 0, j = 0;
         while (i < R.size() || j < tempPoly.size()) {
             if (i < R.size() && (j >= tempPoly.size() || R[i].first > tempPoly[j].first)) {
-                newR.emplace_back(R[i]);
+                newR.emplace_back(R[i].first, R[i].second);
                 i++;
             }
             else if (j < tempPoly.size() && (i >= R.size() || tempPoly[j].first > R[i].first)) {
@@ -706,9 +802,10 @@ void DividePolynomials(const vector<pair<int, Rational>>& P1, const vector<pair<
                 j++;
             }
             else {
-                Rational diff = {
-                    R[i].second.numerator * tempPoly[j].second.denominator - tempPoly[j].second.numerator * R[i].second.denominator,
-                    R[i].second.denominator * tempPoly[j].second.denominator };
+                Rational diff;
+                diff.numerator = R[i].second.numerator * tempPoly[j].second.denominator - tempPoly[j].second.numerator * R[i].second.denominator;
+                diff.denominator = R[i].second.denominator * tempPoly[j].second.denominator;
+
                 if (diff.numerator != 0) {
                     int gcd = GCD(abs(diff.numerator), abs(diff.denominator));
                     diff.numerator /= gcd;
@@ -744,22 +841,6 @@ void PolynomialGCD(const vector<pair<int, Rational>>& P, const vector<pair<int, 
     GCD = A;
 }
 
-bool getValidatedNumber(const char* input, int& number) {
-    for (size_t i = 0; input[i] != '\0'; ++i) {
-        if (i >= 2 || input[i] < '0' || input[i] > '9') { 
-            cout << "Invalid input."<<endl;
-            return false;
-        }
-    }
-
-    number = 0;
-    for (size_t i = 0; input[i] != '\0'; ++i) {
-        number = number * 10 + (input[i] - '0');
-    }
-
-    return true;
-}
-
 void VietaFormulas(const vector<pair<int, Rational>>& polynomial) {
     if (polynomial.empty()) {
         cout << "The polynomial is empty!" << endl;
@@ -777,7 +858,7 @@ void VietaFormulas(const vector<pair<int, Rational>>& polynomial) {
     int degree = sortedPolynomial[0].first;    
     Rational leadingCoeff = sortedPolynomial[0].second; 
 
-    for (size_t i = 1; i < sortedPolynomial.size(); ++i) {
+    for (size_t i = 1; i < sortedPolynomial.size(); i++) {
         int powerDiff = degree - sortedPolynomial[i].first;
         Rational coeff = sortedPolynomial[i].second;
 
@@ -802,116 +883,103 @@ void VietaFormulas(const vector<pair<int, Rational>>& polynomial) {
     }
 }
 
-Rational powRational(const Rational& base, int exponent) {
-    if (exponent == 0) return createRational(1, 1);
-
-    Rational result = base;
-    for (int i = 1; i < exponent; i++) {
-        result = multiplyRationals(result, base);
-    }
-    return result;
-}
-
-Rational BinomialCoefficient(int n, int k) {
-    if (k < 0 || k > n) return createRational(0, 1); 
-    if (k == 0 || k == n) return createRational(1, 1); 
-
-    Rational result = createRational(1, 1);
-
-    for (int i = 1; i <= k; i++) {
-        result = multiplyRationals(result, createRational(n - i + 1, 1));
-        result = simplifyFraction(result); 
-
-        result = divideRationals(result, createRational(i, 1));
-        result = simplifyFraction(result);
-    }
-
-    return result;
-}
-
 void RepresentPolynomialInPowersOfXPlusA(vector<pair<int, Rational>>& polynomial, const Rational& shift) {
     if (polynomial.empty()) {
         cout << "The polynomial is empty!" << endl;
         return;
     }
 
-    cout << "P(x) = ";
-    DisplayPolynomial(polynomial);
-    cout << "Shift value (a): " << shift.numerator << "/" << shift.denominator << endl;
+    cout << "P(x) = "; DisplayPolynomial(polynomial);
+    cout << "Shift value (a): "; PrintRational(shift); cout << endl;
 
     vector<pair<int, Rational>> expandedPolynomial;
-
     for (size_t i = 0; i < polynomial.size(); i++) {
-        int power = polynomial[i].first;
-        Rational coeff = polynomial[i].second;
-
-        for (int k = 0; k <= power; k++) {
-            Rational binomialCoeff = BinomialCoefficient(power, k);
-
-            Rational shiftTerm = powRational(shift, power - k);
-            if ((power - k) % 2 != 0) {
-                shiftTerm.numerator = -shiftTerm.numerator;
-            }
-
-            Rational termCoeff = multiplyRationals(binomialCoeff, shiftTerm);
-            termCoeff = multiplyRationals(termCoeff, coeff);
-
-            bool termFound = false;
-            for (size_t j = 0; j < expandedPolynomial.size(); j++) {
-                if (expandedPolynomial[j].first == k) {
-                    expandedPolynomial[j].second = addRationals(expandedPolynomial[j].second, termCoeff);
-                    termFound = true;
-                    break;
-                }
-            }
-            if (!termFound) {
-                expandedPolynomial.emplace_back(k, termCoeff);
-            }
-        }
+        ExpandPolynomial(expandedPolynomial, polynomial[i].first, polynomial[i].second, shift);
     }
 
     sortVector(expandedPolynomial);
+    PrintPolynomial(expandedPolynomial, shift);
+}
 
-    cout << "P(x + " << shift.numerator;
-    if (shift.denominator != 1) {
-        cout << "/" << shift.denominator;
-    }
-    cout << ") = ";
-
-    bool firstTerm = true;
-    for (size_t i = 0; i < expandedPolynomial.size(); ++i) {
-        const auto& term = expandedPolynomial[i];
-
-        if (term.second.numerator == 0) {
-            continue;
-        }
-
-        if (!firstTerm) {
-            cout << " + ";
-        }
-        firstTerm = false;
-
-        if (term.second.numerator != 1 || term.second.denominator != 1 || term.first == 0) {
-            cout << "(" << term.second.numerator;
-            if (term.second.denominator != 1) {
-                cout << "/" << term.second.denominator;
-            }
-            cout << ")";
-        }
-
-        if (term.first > 0) {
-            cout << "(x + " << shift.numerator;
-            if (shift.denominator != 1) {
-                cout << "/" << shift.denominator;
-            }
-            cout << ")";
-            if (term.first > 1) {
-                cout << "^" << term.first;
-            }
-        }
+void FactorizePolynomial(vector<pair<int, Rational>>& polynomial) {
+    if (polynomial.empty()) {
+        cout << "The polynomial is empty!" << endl;
+        return;
     }
 
-    cout << endl;
+    cout << "Factoring Polynomial P(x): ";
+    DisplayPolynomial(polynomial);
+
+    vector<pair<Rational, int>> factors;
+    vector<pair<int, Rational>> remainder = polynomial;
+
+    ExtractFactors(remainder, factors);
+
+    if (remainder.size() == 2) {
+        handleQuadratic(remainder);
+    }
+
+    DisplayRoots(factors);
+
+    cout << "Factored Polynomial: ";
+    displayFactors(factors);
+}
+
+
+// ---------------------- Factorization & Root Finding --------------
+void ExtractFactors(vector<pair<int, Rational>>& remainder, vector<pair<Rational, int>>& factors) {
+    while (remainder.size() > 1) {
+        Rational root;
+        if (!findRoot(remainder, root)) {
+            cout << "Remaining polynomial is irreducible over the rationals: ";
+            DisplayPolynomial(remainder);
+            return;
+        }
+
+        int multiplicity = 0;
+        vector<pair<int, Rational>> divisor = {
+            {1, createRational(1, 1)},
+            {0, multiplyRationals(createRational(-1, 1), root)}
+        };
+
+        vector<pair<int, Rational>> quotient, newRemainder;
+
+        do {
+            DividePolynomials(remainder, divisor, quotient, newRemainder);
+            Rational valueAtRoot;
+            EvaluatePolynomial(remainder, root, valueAtRoot);
+
+            if (valueAtRoot.numerator == 0) {
+                ++multiplicity;
+                remainder = quotient;
+            }
+            else {
+                break;
+            }
+        } while (true);
+
+        factors.emplace_back(root, multiplicity);
+    }
+}
+
+void ExpandPolynomial(vector<pair<int, Rational>>& expandedPolynomial, int power, Rational coeff, const Rational& shift) {
+    for (int k = 0; k <= power; k++) {
+        Rational binomialCoeff = BinomialCoefficient(power, k);
+        Rational shiftTerm = powRational(shift, power - k);
+        if ((power - k) % 2 != 0) shiftTerm.numerator = -shiftTerm.numerator;
+
+        Rational termCoeff = multiplyRationals(multiplyRationals(binomialCoeff, shiftTerm), coeff);
+
+        bool termFound = false;
+        for (size_t j = 0; j < expandedPolynomial.size(); j++) {
+            if (expandedPolynomial[j].first == k) {
+                expandedPolynomial[j].second = addRationals(expandedPolynomial[j].second, termCoeff);
+                termFound = true;
+                break;
+            }
+        }
+        if (!termFound) expandedPolynomial.emplace_back(k, termCoeff);
+    }
 }
 
 vector<int> findDivisors(int num) {
@@ -1023,161 +1091,8 @@ void handleQuadratic(const vector<pair<int, Rational>>& quadratic) {
     cout << " and x = " << root2.numerator << "/" << root2.denominator << endl;
 }
 
-void displayFactors(const vector<pair<Rational, int>>& factors) {
-    for (size_t i = 0; i < factors.size(); i++) {
-        const auto& factor = factors[i];
-        Rational root = factor.first;
-        int multiplicity = factor.second;
 
-        if (i > 0) {
-            cout << " * ";
-        }
-
-        cout << "(x ";
-        if (root.numerator < 0) {
-            cout << "+ " << -root.numerator;
-        }
-        else {
-            cout << "- " << root.numerator;
-        }
-
-        if (root.denominator != 1 && root.denominator != -1) {
-            cout << "/" << abs(root.denominator);
-        }
-        cout << ")";
-
-        if (multiplicity > 1) {
-            cout << "^" << multiplicity;
-        }
-    }
-    cout << endl;
-}
-
-void FactorizePolynomial(vector<pair<int, Rational>>& polynomial) {
-    if (polynomial.empty()) {
-        cout << "The polynomial is empty!" << endl;
-        return;
-    }
-
-    cout << "Factoring Polynomial P(x): ";
-    DisplayPolynomial(polynomial);
-
-    vector<pair<Rational, int>> factors;
-    vector<pair<int, Rational>> remainder = polynomial;
-
-    while (remainder.size() > 1) {
-        Rational root;
-        if (!findRoot(remainder, root)) {
-            cout << "Remaining polynomial is irreducible over the rationals: ";
-            DisplayPolynomial(remainder);
-            return;
-        }
-
-        int multiplicity = 0;
-        vector<pair<int, Rational>> divisor = {
-            {1, createRational(1, 1)},
-            {0, multiplyRationals(createRational(-1, 1), root)}
-        };
-
-        vector<pair<int, Rational>> quotient, newRemainder;
-
-        do {
-            DividePolynomials(remainder, divisor, quotient, newRemainder);
-
-            Rational valueAtRoot;
-            EvaluatePolynomial(remainder, root, valueAtRoot);
-
-            if (valueAtRoot.numerator == 0) {
-                ++multiplicity;
-                remainder = quotient;
-            }
-            else {
-                break;
-            }
-        } while (true);
-
-        factors.emplace_back(root, multiplicity);
-    }
-
-    if (remainder.size() == 2) {
-        handleQuadratic(remainder);
-    }
-
-    cout << "RATIONAL ROOTS:" << endl;
-    for (size_t i = 0; i < factors.size(); ++i) {
-        const auto& factor = factors[i];
-
-        cout << "x = ";
-
-        if (factor.first.denominator == -1) {
-            cout << -factor.first.numerator;
-        }
-        else if (factor.first.denominator == 1) {
-            cout << factor.first.numerator;
-        }
-        else {
-            cout << factor.first.numerator << "/" << factor.first.denominator;
-        }
-
-        cout << " -> " << factor.second << "-fold root" << endl;
-    }
-
-    cout << "Factored Polynomial: ";
-    displayFactors(factors);
-}
-
-void InputPolynomial(vector<pair<int, Rational>>& poly, int* powers, char* input, int& counter) {
-    cout << "Enter powers for the polynomial:" << endl;
-    EnterPowers(powers, input, counter);
-    EnterCoefficients(powers, counter, poly, input);
-    sortVector(poly);
-}
-
-Rational InputScalar(char* input) {
-    Rational scalar;
-    bool validScalar = false;
-    do {
-        cout << "Enter scalar (as a rational number): ";
-        getInput(input);
-        if (isCoefficientValid(input)) {
-            if (ProcessRational(input, scalar)) {
-                validScalar = true;
-            }
-            else {
-                cout << "Invalid scalar. Denominator cannot be zero. Please re-enter." << endl;
-            }
-        }
-        else {
-            cout << "Invalid scalar format. Please re-enter." << endl;
-        }
-    } while (!validScalar);
-    return scalar;
-}
-
-void HandlePolynomialAddition(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>& qVector, vector<pair<int, Rational>>& result, int* pPowers, int* qPowers, char* input, int& pCounter, int& qCounter) {
-    cout << "Enter powers for P(x):" << endl;
-    InputPolynomial(pVector, pPowers, input, pCounter);
-
-    cout << "Enter powers for Q(x):" << endl;
-    InputPolynomial(qVector, qPowers, input, qCounter);
-
-    PolynomSum(&pVector, &qVector, result);
-    cout << "Result of P(x) + Q(x): ";
-    DisplayPolynomial(result);
-}
-
-void HandlePolynomialSubtraction(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>& qVector, vector<pair<int, Rational>>& result, int* pPowers, int* qPowers, char* input, int& pCounter, int& qCounter) {
-    cout << "Enter powers for P(x):" << endl;
-    InputPolynomial(pVector, pPowers, input, pCounter);
-
-    cout << "Enter powers for Q(x):" << endl;
-    InputPolynomial(qVector, qPowers, input, qCounter);
-
-    PolynomSubtract(&pVector, &qVector, result);
-    cout << "Result of P(x) - Q(x): ";
-    DisplayPolynomial(result);
-}
-
+// ---------------------- Main ---------------------------------------
 void ClearAll(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>& qVector, vector<pair<int, Rational>>& result, vector<pair<int, Rational>>& quotient, vector<pair<int, Rational>>& remainder, int& pCounter, int& qCounter, int* pPowers, int* qPowers) {
     pVector.clear();
     qVector.clear();
@@ -1191,33 +1106,34 @@ void ClearAll(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>&
     fill(qPowers, qPowers + MAX_ARR_SIZE, 0);
 }
 
+void DisplayOptions() {
+    cout << "\nOptions:" << endl;
+    cout << "1 - Sum two polynomials" << endl;
+    cout << "2 - Subtract two polynomials" << endl;
+    cout << "3 - Multiply polynomial by scalar" << endl;
+    cout << "4 - Multiply two polynomials" << endl;
+    cout << "5 - Find value of polynomial at a given number" << endl;
+    cout << "6 - Divide two polynomials" << endl;
+    cout << "7 - GCD of Polynomials" << endl;
+    cout << "8 - Display Vieta's formulas for a given polynomial" << endl;
+    cout << "9 - Represent a polynomial in powers of (x+a)" << endl;
+    cout << "10 - Factor polynomial and find its rational roots" << endl;
+    cout << "11 - Quit the application" << endl;
+}
+
 int main() {
     cout << "Welcome to the Polynomial Calculator!" << endl;
 
-    int pPowers[MAX_ARR_SIZE] = { 0 };
-    int qPowers[MAX_ARR_SIZE] = { 0 };
+    int pPowers[MAX_ARR_SIZE] = { 0 }, qPowers[MAX_ARR_SIZE] = { 0 };
     char input[MAX_ARR_SIZE];
     int pCounter = 0, qCounter = 0;
 
-    vector<pair<int, Rational>> pVector;
-    vector<pair<int, Rational>> qVector;
+    vector<pair<int, Rational>> pVector, qVector;
     vector<pair<int, Rational>> result;
-    vector<pair<int, Rational>> quotient;
-    vector<pair<int, Rational>> remainder;
+    vector<pair<int, Rational>> quotient, remainder;
 
     while (true) {
-        cout << "\nOptions:" << endl;
-        cout << "1 - Sum two polynomials" << endl;
-        cout << "2 - Subtract two polynomials" << endl;
-        cout << "3 - Multiply polynomial by scalar" << endl;
-        cout << "4 - Multiply two polynomials" << endl;
-        cout << "5 - Find value of polynomial at a given number" << endl;
-        cout << "6 - Divide two polynomials" << endl;
-        cout << "7. GCD of Polynomials" << endl;
-        cout << "8. Display Vieta's formulas for a given polynomial" << endl;
-        cout << "9. Represent a polynomial in powers of (x+a)" << endl;
-        cout << "10. Factor polynomial and find its rational roots" << endl;
-        cout << "11 - Quit the application" << endl;
+        DisplayOptions();
 
         int choice = 0;
         bool validChoice = false;
