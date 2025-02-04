@@ -55,23 +55,6 @@ int LCM(int a, int b) {
     return abs(a * b) / GCD(a, b);
 }
 
-Rational BinomialCoefficient(int n, int k) {
-    if (k < 0 || k > n) return createRational(0, 1); 
-    if (k == 0 || k == n) return createRational(1, 1); 
-
-    Rational result = createRational(1, 1);
-
-    for (int i = 1; i <= k; i++) {
-        result = multiplyRationals(result, createRational(n - i + 1, 1));
-        result = simplifyFraction(result); 
-
-        result = divideRationals(result, createRational(i, 1));
-        result = simplifyFraction(result);
-    }
-
-    return result;
-}
-
 
 // ---------------------- Rational Operations -----------------------
 Rational addRationals(const Rational& r1, const Rational& r2) {
@@ -160,6 +143,23 @@ Rational simplifyFraction(const Rational& r) {
    return { r.numerator / gcd, r.denominator / gcd };
 }
 
+Rational BinomialCoefficient(int n, int k) {
+    if (k < 0 || k > n) return createRational(0, 1); 
+    if (k == 0 || k == n) return createRational(1, 1); 
+
+    Rational result = createRational(1, 1);
+
+    for (int i = 1; i <= k; i++) {
+        result = multiplyRationals(result, createRational(n - i + 1, 1));
+        result = simplifyFraction(result); 
+
+        result = divideRationals(result, createRational(i, 1));
+        result = simplifyFraction(result);
+    }
+
+    return result;
+}
+
 
 // ---------------------- Displayment -------------------------------
 void DisplayPolynomial(const vector<pair<int, Rational>> &vec) {
@@ -179,6 +179,13 @@ void DisplayPolynomial(const vector<pair<int, Rational>> &vec) {
         if (power != 0) cout << "x^" << power << " ";
     }
     cout << endl;
+}
+
+void PrintRoot(const Rational& root) {
+    cout << "x = ";
+    if (root.denominator == -1) cout << -root.numerator;
+    else if (root.denominator == 1) cout << root.numerator;
+    else cout << root.numerator << "/" << root.denominator;
 }
 
 void DisplayRoots(const vector<pair<Rational, int>>& factors) {
@@ -246,152 +253,6 @@ void displayFactors(const vector<pair<Rational, int>>& factors) {
         }
     }
     cout << endl;
-}
-
-void PrintRoot(const Rational& root) {
-    cout << "x = ";
-    if (root.denominator == -1) cout << -root.numerator;
-    else if (root.denominator == 1) cout << root.numerator;
-    else cout << root.numerator << "/" << root.denominator;
-}
-
-// ---------------------- Input Handling ----------------------------
-void getInput(char* input) {
-    if (input == nullptr) return;
-    bool validInput = false;
-
-    while (!validInput) {
-        int index = 0;
-        char c;
-
-        while (index < MAX_ARR_SIZE - 1) {
-            c = cin.get();
-
-            if (c == '\n') {
-                break;
-            }
-
-            input[index++] = c;
-        }
-
-        input[index] = '\0';
-
-        if (index == MAX_ARR_SIZE - 1 && c != '\n') {
-            while (cin.get() != '\n');
-            cout << "Input was too long. Please try again." << endl;
-        }
-        else {
-            validInput = true;
-        }
-    }
-}
-
-void EnterCoefficients(const int* powers, int powerCount, vector<pair<int, Rational>>& coefficients, char* input) {
-    if (powers == nullptr || input == nullptr) {
-        cout << "Error: Null pointer passed to EnterCoefficients." << endl;
-        return;
-    }
-
-    coefficients.clear();
-
-    for (int i = 0; i < powerCount; i++) {
-        bool valid = false;
-        Rational coefficient;
-
-        do {
-            cout << "Enter coefficient for power " << powers[i] << ": ";
-            getInput(input);
-
-            if (isCoefficientValid(input)) {
-                ProcessRational(input, coefficient);
-                valid = true;
-            }
-            else {
-                cout << "Invalid coefficient, please re-enter." << endl;
-            }
-        } while (!valid);
-
-        if (coefficient.numerator != 0) {
-            coefficients.emplace_back(powers[i], coefficient);
-        }
-    }
-}
-
-void EnterPowers(int* powers, char* input, int& counter) {
-    if (powers == nullptr || input == nullptr) {
-        cout << "Error: Null pointer passed to EnterPowers." << endl;
-        return;
-    }
-
-    do {
-        cout << "Enter powers: ";
-        getInput(input);
-        counter = 0;
-    } while (!arePowersValid(input));
-
-    ProcessPowers(input, powers, counter);
-    counter = RemoveDuplicates(powers, counter);
-
-    bool zeroPowerFound = false;
-    for (int i = 0; i < counter; ++i) {
-        if (powers[i] == 0) {
-            zeroPowerFound = true;
-            break;
-        }
-    }
-    if (!zeroPowerFound) {
-        powers[counter] = 0; 
-        ++counter;            
-    }
-}
-
-Rational InputScalar(char* input) {
-    Rational scalar;
-
-    while (true) {
-        cout << "Enter scalar (as a rational number): ";
-        getInput(input);
-        if (isCoefficientValid(input) && ProcessRational(input, scalar)) {
-            break;
-        }
-        cout << "Invalid scalar. Please re-enter." << endl;
-    }
-    return scalar;
-}
-
-void InputPolynomial(vector<pair<int, Rational>>& poly, int* powers, char* input, int& counter) {
-    EnterPowers(powers, input, counter);
-    EnterCoefficients(powers, counter, poly, input);
-    sortVector(poly);
-}
-
-int splitInput(const char* input, int* output) {
-    if (!input || !output) return 0;
-
-    int index = 0, num = 0;
-    bool isNeg = false, inNum = false;
-
-    while (*input != '\0') {
-        if (*input == '-') {
-            if (inNum) return -1;
-            isNeg = true;
-        }
-        else if (isDigit(*input)) {
-            num = num * 10 + (*input - '0');
-            inNum = true;
-        }
-        else if (*input == ' ' && inNum) {
-            output[index++] = isNeg ? -num : num;
-            num = 0, isNeg = false, inNum = false;
-        }
-        input++;
-    }
-
-    if (inNum) {
-        output[index++] = isNeg ? -num : num;
-    }
-
-    return index;
 }
 
 
@@ -512,6 +373,35 @@ bool getValidatedNumber(const char* input, int& number) {
 
 
 // ---------------------- Processing --------------------------------
+int splitInput(const char* input, int* output) {
+    if (!input || !output) return 0;
+
+    int index = 0, num = 0;
+    bool isNeg = false, inNum = false;
+
+    while (*input != '\0') {
+        if (*input == '-') {
+            if (inNum) return -1;
+            isNeg = true;
+        }
+        else if (isDigit(*input)) {
+            num = num * 10 + (*input - '0');
+            inNum = true;
+        }
+        else if (*input == ' ' && inNum) {
+            output[index++] = isNeg ? -num : num;
+            num = 0, isNeg = false, inNum = false;
+        }
+        input++;
+    }
+
+    if (inNum) {
+        output[index++] = isNeg ? -num : num;
+    }
+
+    return index;
+}
+
 void ProcessPowers(char* input, int* pPowers, int& counter) {
     if (input == nullptr || pPowers == nullptr) {
         return;
@@ -589,7 +479,118 @@ int RemoveDuplicates(int* powers, int count) {
 }
 
 
-// ---------------------- Operations --------------------------------
+// ---------------------- Input Handling ----------------------------
+void getInput(char* input) {
+    if (input == nullptr) return;
+    bool validInput = false;
+
+    while (!validInput) {
+        int index = 0;
+        char c;
+
+        while (index < MAX_ARR_SIZE - 1) {
+            c = cin.get();
+
+            if (c == '\n') {
+                break;
+            }
+
+            input[index++] = c;
+        }
+
+        input[index] = '\0';
+
+        if (index == MAX_ARR_SIZE - 1 && c != '\n') {
+            while (cin.get() != '\n');
+            cout << "Input was too long. Please try again." << endl;
+        }
+        else {
+            validInput = true;
+        }
+    }
+}
+
+void EnterCoefficients(const int* powers, int powerCount, vector<pair<int, Rational>>& coefficients, char* input) {
+    if (powers == nullptr || input == nullptr) {
+        cout << "Error: Null pointer passed to EnterCoefficients." << endl;
+        return;
+    }
+
+    coefficients.clear();
+
+    for (int i = 0; i < powerCount; i++) {
+        bool valid = false;
+        Rational coefficient;
+
+        do {
+            cout << "Enter coefficient for power " << powers[i] << ": ";
+            getInput(input);
+
+            if (isCoefficientValid(input)) {
+                ProcessRational(input, coefficient);
+                valid = true;
+            }
+            else {
+                cout << "Invalid coefficient, please re-enter." << endl;
+            }
+        } while (!valid);
+
+        if (coefficient.numerator != 0) {
+            coefficients.emplace_back(powers[i], coefficient);
+        }
+    }
+}
+
+void EnterPowers(int* powers, char* input, int& counter) {
+    if (powers == nullptr || input == nullptr) {
+        cout << "Error: Null pointer passed to EnterPowers." << endl;
+        return;
+    }
+
+    do {
+        cout << "Enter powers: ";
+        getInput(input);
+        counter = 0;
+    } while (!arePowersValid(input));
+
+    ProcessPowers(input, powers, counter);
+    counter = RemoveDuplicates(powers, counter);
+
+    bool zeroPowerFound = false;
+    for (int i = 0; i < counter; ++i) {
+        if (powers[i] == 0) {
+            zeroPowerFound = true;
+            break;
+        }
+    }
+    if (!zeroPowerFound) {
+        powers[counter] = 0; 
+        ++counter;            
+    }
+}
+
+Rational InputScalar(char* input) {
+    Rational scalar;
+
+    while (true) {
+        cout << "Enter scalar (as a rational number): ";
+        getInput(input);
+        if (isCoefficientValid(input) && ProcessRational(input, scalar)) {
+            break;
+        }
+        cout << "Invalid scalar. Please re-enter." << endl;
+    }
+    return scalar;
+}
+
+void InputPolynomial(vector<pair<int, Rational>>& poly, int* powers, char* input, int& counter) {
+    EnterPowers(powers, input, counter);
+    EnterCoefficients(powers, counter, poly, input);
+    sortVector(poly);
+}
+
+
+// ---------------------- Options 1-8 -------------------------------
 void PolynomSum(vector<pair<int, Rational>>* v1Ptr, vector<pair<int, Rational>>* v2Ptr, vector<pair<int, Rational>>& resVec) {
     if (!v1Ptr || !v2Ptr) {
         cout << "Error: Null pointer passed to PolynomSum." << endl;
@@ -883,105 +884,8 @@ void VietaFormulas(const vector<pair<int, Rational>>& polynomial) {
     }
 }
 
-void RepresentPolynomialInPowersOfXPlusA(vector<pair<int, Rational>>& polynomial, const Rational& shift) {
-    if (polynomial.empty()) {
-        cout << "The polynomial is empty!" << endl;
-        return;
-    }
-
-    cout << "P(x) = "; DisplayPolynomial(polynomial);
-    cout << "Shift value (a): "; PrintRational(shift); cout << endl;
-
-    vector<pair<int, Rational>> expandedPolynomial;
-    for (size_t i = 0; i < polynomial.size(); i++) {
-        ExpandPolynomial(expandedPolynomial, polynomial[i].first, polynomial[i].second, shift);
-    }
-
-    sortVector(expandedPolynomial);
-    PrintPolynomial(expandedPolynomial, shift);
-}
-
-void FactorizePolynomial(vector<pair<int, Rational>>& polynomial) {
-    if (polynomial.empty()) {
-        cout << "The polynomial is empty!" << endl;
-        return;
-    }
-
-    cout << "Factoring Polynomial P(x): ";
-    DisplayPolynomial(polynomial);
-
-    vector<pair<Rational, int>> factors;
-    vector<pair<int, Rational>> remainder = polynomial;
-
-    ExtractFactors(remainder, factors);
-
-    if (remainder.size() == 2) {
-        handleQuadratic(remainder);
-    }
-
-    DisplayRoots(factors);
-
-    cout << "Factored Polynomial: ";
-    displayFactors(factors);
-}
-
 
 // ---------------------- Factorization & Root Finding --------------
-void ExtractFactors(vector<pair<int, Rational>>& remainder, vector<pair<Rational, int>>& factors) {
-    while (remainder.size() > 1) {
-        Rational root;
-        if (!findRoot(remainder, root)) {
-            cout << "Remaining polynomial is irreducible over the rationals: ";
-            DisplayPolynomial(remainder);
-            return;
-        }
-
-        int multiplicity = 0;
-        vector<pair<int, Rational>> divisor = {
-            {1, createRational(1, 1)},
-            {0, multiplyRationals(createRational(-1, 1), root)}
-        };
-
-        vector<pair<int, Rational>> quotient, newRemainder;
-
-        do {
-            DividePolynomials(remainder, divisor, quotient, newRemainder);
-            Rational valueAtRoot;
-            EvaluatePolynomial(remainder, root, valueAtRoot);
-
-            if (valueAtRoot.numerator == 0) {
-                ++multiplicity;
-                remainder = quotient;
-            }
-            else {
-                break;
-            }
-        } while (true);
-
-        factors.emplace_back(root, multiplicity);
-    }
-}
-
-void ExpandPolynomial(vector<pair<int, Rational>>& expandedPolynomial, int power, Rational coeff, const Rational& shift) {
-    for (int k = 0; k <= power; k++) {
-        Rational binomialCoeff = BinomialCoefficient(power, k);
-        Rational shiftTerm = powRational(shift, power - k);
-        if ((power - k) % 2 != 0) shiftTerm.numerator = -shiftTerm.numerator;
-
-        Rational termCoeff = multiplyRationals(multiplyRationals(binomialCoeff, shiftTerm), coeff);
-
-        bool termFound = false;
-        for (size_t j = 0; j < expandedPolynomial.size(); j++) {
-            if (expandedPolynomial[j].first == k) {
-                expandedPolynomial[j].second = addRationals(expandedPolynomial[j].second, termCoeff);
-                termFound = true;
-                break;
-            }
-        }
-        if (!termFound) expandedPolynomial.emplace_back(k, termCoeff);
-    }
-}
-
 vector<int> findDivisors(int num) {
     vector<int> divisors;
 
@@ -1054,9 +958,64 @@ bool findRoot(const vector<pair<int, Rational>>& polynomial, Rational& root) {
     return false;
 }
 
+void ExtractFactors(vector<pair<int, Rational>>& remainder, vector<pair<Rational, int>>& factors) {
+    while (remainder.size() > 1) {
+        Rational root;
+        if (!findRoot(remainder, root)) {
+            cout << "Remaining polynomial is irreducible over the rationals: ";
+            DisplayPolynomial(remainder);
+            return;
+        }
+
+        int multiplicity = 0;
+        vector<pair<int, Rational>> divisor = {
+            {1, createRational(1, 1)},
+            {0, multiplyRationals(createRational(-1, 1), root)}
+        };
+
+        vector<pair<int, Rational>> quotient, newRemainder;
+
+        do {
+            DividePolynomials(remainder, divisor, quotient, newRemainder);
+            Rational valueAtRoot;
+            EvaluatePolynomial(remainder, root, valueAtRoot);
+
+            if (valueAtRoot.numerator == 0) {
+                ++multiplicity;
+                remainder = quotient;
+            }
+            else {
+                break;
+            }
+        } while (true);
+
+        factors.emplace_back(root, multiplicity);
+    }
+}
+
+void ExpandPolynomial(vector<pair<int, Rational>>& expandedPolynomial, int power, Rational coeff, const Rational& shift) {
+    for (int k = 0; k <= power; k++) {
+        Rational binomialCoeff = BinomialCoefficient(power, k);
+        Rational shiftTerm = powRational(shift, power - k);
+        if ((power - k) % 2 != 0) shiftTerm.numerator = -shiftTerm.numerator;
+
+        Rational termCoeff = multiplyRationals(multiplyRationals(binomialCoeff, shiftTerm), coeff);
+
+        bool termFound = false;
+        for (size_t j = 0; j < expandedPolynomial.size(); j++) {
+            if (expandedPolynomial[j].first == k) {
+                expandedPolynomial[j].second = addRationals(expandedPolynomial[j].second, termCoeff);
+                termFound = true;
+                break;
+            }
+        }
+        if (!termFound) expandedPolynomial.emplace_back(k, termCoeff);
+    }
+}
+
 void handleQuadratic(const vector<pair<int, Rational>>& quadratic) {
-    if (quadratic.size() != 2) {
-        cout << "Error: Expected a quadratic polynomial." << endl;
+    if (quadratic.size() != 3) { 
+        cout << "Error: Expected a quadratic polynomial with three terms." << endl;
         return;
     }
 
@@ -1091,8 +1050,53 @@ void handleQuadratic(const vector<pair<int, Rational>>& quadratic) {
     cout << " and x = " << root2.numerator << "/" << root2.denominator << endl;
 }
 
+// ---------------------- Options 9-10 ------------------------------
+void RepresentPolynomialInPowersOfXPlusA(vector<pair<int, Rational>>& polynomial, const Rational& shift) {
+    if (polynomial.empty()) {
+        cout << "The polynomial is empty!" << endl;
+        return;
+    }
 
-// ---------------------- Main ---------------------------------------
+    cout << "P(x) = "; DisplayPolynomial(polynomial);
+    cout << "Shift value (a): "; PrintRational(shift); cout << endl;
+
+    vector<pair<int, Rational>> expandedPolynomial;
+    for (size_t i = 0; i < polynomial.size(); i++) {
+        ExpandPolynomial(expandedPolynomial, polynomial[i].first, polynomial[i].second, shift);
+    }
+
+    sortVector(expandedPolynomial);
+    PrintPolynomial(expandedPolynomial, shift);
+}
+
+
+
+void FactorizePolynomial(vector<pair<int, Rational>>& polynomial) {
+    if (polynomial.empty()) {
+        cout << "The polynomial is empty!" << endl;
+        return;
+    }
+
+    cout << "Factoring Polynomial P(x): ";
+    DisplayPolynomial(polynomial);
+
+    vector<pair<Rational, int>> factors;
+    vector<pair<int, Rational>> remainder = polynomial;
+
+    ExtractFactors(remainder, factors);
+
+    if (remainder.size() == 3) { 
+        handleQuadratic(remainder);
+    }
+
+    DisplayRoots(factors);
+
+    cout << "Factored Polynomial: ";
+    displayFactors(factors);
+}
+
+
+// ---------------------- Main --------------------------------------
 void ClearAll(vector<pair<int, Rational>>& pVector, vector<pair<int, Rational>>& qVector, vector<pair<int, Rational>>& result, vector<pair<int, Rational>>& quotient, vector<pair<int, Rational>>& remainder, int& pCounter, int& qCounter, int* pPowers, int* qPowers) {
     pVector.clear();
     qVector.clear();

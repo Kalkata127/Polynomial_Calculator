@@ -1,5 +1,5 @@
 ﻿  Polynomial_Calculator.cpp
-C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\Polynomial_Calculator\Polynomial_Calculator.cpp(154,23): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\Polynomial_Calculator\Polynomial_Calculator.cpp(155,25): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
-C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\Polynomial_Calculator\Polynomial_Calculator.cpp(728,47): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
+C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\Polynomial_Calculator\Polynomial_Calculator.cpp(108,23): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\Polynomial_Calculator\Polynomial_Calculator.cpp(109,25): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
+C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\Polynomial_Calculator\Polynomial_Calculator.cpp(867,47): warning C4244: 'argument': conversion from 'double' to 'int', possible loss of data
   Polynomial_Calculator.vcxproj -> C:\Users\kalka\OneDrive\Desktop\Polynomial_Calculator\x64\Debug\Polynomial_Calculator.exe
